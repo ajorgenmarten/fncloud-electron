@@ -1,0 +1,12 @@
+.request-node-input {
+    @apply w-full
+    grow
+    outline-none
+    bg-transparent
+    text-gray-100
+    border
+    px-2
+    py-1
+    rounded-md
+    bg-slate-800
+}
