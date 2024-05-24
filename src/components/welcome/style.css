@@ -1,0 +1,6 @@
+.translate:hover {
+    transform: translateZ(40px);
+}
+.perspective {
+    perspective: 700px
+}

@@ -1,5 +1,7 @@
+import './style.css'
+
 export function WelcomeContact() {
-    return <div className="p-[1px] select-none border border-opacity-20 border-slate-800 shadow-slate-800 shadow-[0_0_60px_20px] mt-14 rounded-2xl hover:scale-110 transition-transform group">
+    return <div className="p-[1px] select-none border border-opacity-20 border-slate-800 shadow-slate-800 translate shadow-[0_0_60px_20px] mt-14 rounded-2xl transition-transform group">
     <div className="flex items-center max-w-full w-96 backdrop-blur-sm bg-slate-800 bg-opacity-60 rounded-[15px]">
         <img className="rounded-full w-28 m-5" src="profile.jpg" alt="" />
         
@@ -23,7 +25,6 @@ export function WelcomeContact() {
                     </button>
                 </a>
             </div>
-
         </div>
     </div>
 </div>

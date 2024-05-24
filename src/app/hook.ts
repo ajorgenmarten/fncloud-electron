@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { ModelData, ServiceData } from "./types"
+import { ModelData, ServiceData, ServiceTemplate } from "./types"
+import { ServiceJson } from "../../electron/src/types"
 
 export const useModel = () => {
     const [models, setmodels] = useState<ModelData[]>([])
@@ -63,6 +64,7 @@ export const useModel = () => {
 export const useServices = () => {
     const [services, setServices] = useState<ServiceData[]>([])
     const [selectedService, setSelectedService] = useState<string|null>(null)
+    const [templates, setTemplates] = useState<ServiceTemplate[]>([])
 
     const getIndex = (name: string) => {
         return services.findIndex(s => s.name == name)
@@ -96,9 +98,15 @@ export const useServices = () => {
         setServices( services )
     }
 
+    const loadAllServiceTemplates = async () => {
+        const templates = await window.ipcRenderer.invoke('services:get-all-templates')
+        setTemplates(templates)
+    }
+
     useEffect(() => {
         loadAllServices()
+        loadAllServiceTemplates()
     }, [])
 
-    return { services, selectedService, createService, renameService, deleteService, selectService }
+    return { services, selectedService, templates, createService, renameService, deleteService, selectService }
 }

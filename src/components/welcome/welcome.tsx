@@ -32,7 +32,7 @@ export function Welcome () {
         
         <div className="absolute w-1 h-1 rounded-full bg-emerald-500" style={{ boxShadow: '0 0 190px 150px #10b981' }} ref={light}></div>
         
-        <div className="absolute flex flex-col items-center justify-center w-full h-full backdrop-blur">
+        <div className="absolute flex flex-col items-center justify-center w-full h-full backdrop-blur perspective">
 
             {/* ICONO Y NOMBRE DEL PROYECTO */}
             <WelcomeHeader />

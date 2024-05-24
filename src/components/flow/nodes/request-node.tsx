@@ -1,24 +1,19 @@
-import { Handle, Position } from "reactflow";
-import { useState } from "react";
+import { Handle, NodeProps, Position } from "reactflow";
+import { useContext, useState } from "react";
+import { AppContext } from "../../../app/context";
 
  
-export function RequestNode () {
-    const { name, edit, handleEdit } = hook()
+export function RequestNode (props: NodeProps) {
+
+    const { indicator, method, onChangePath, onChangeMethod, saveNodeRequest } = hook(props)
 
     return <div className="w-60 bg-slate-900 p-2 rounded-md shadow-xl">
 
-        <div className="flex items-center mb-4 border-b-[1px] border-gray-600 pb-2">
+        <div className="flex items-center mb-4 border-b-[1px] border-gray-600">
 
-            {
-                edit ?
+            { indicator && <i className="bi bi-circle-fill text-[6px] ml-1 text-white"></i> }
 
-                <input 
-                    autoFocus
-                    spellCheck={false} 
-                    className="request-node-input nodrag"
-                    type="text" /> :
-
-                <span className="w-full
+            <span className="w-full
                         h-[34px]
                         grow
                         border-transparent
@@ -26,23 +21,10 @@ export function RequestNode () {
                         text-gray-500
                         px-2
                         py-1">
-                    {name}
-                </span> 
-
-            }
+                    Request
+            </span>
             
-            
-            {
-                edit ?
-
-                <button className="hover:text-orange-300 text-slate-500 w-8 h-8" onClick={handleEdit}>
-                    <i className="bi bi-floppy"></i>
-                </button> :
-
-                <button className="hover:text-orange-300 text-slate-500 w-8 h-8" onClick={handleEdit}>
-                    <i className="bi bi-pencil"></i>
-                </button> 
-            }
+            <i className="bi bi-globe2 text-slate-500"></i>
 
         </div>
 
@@ -50,29 +32,62 @@ export function RequestNode () {
 
             <div>
                 <span className="uppercase text-gray-400">Endpoint path</span>
-                <input type="text" className="request-node-input nodrag" spellCheck={false} />
+                <input type="text" className="request-node-input nodrag" value={props.data.path} spellCheck={false} onChange={onChangePath}/>
+            </div>
+
+            <div>
+                <span className="uppercase text-gray-400">Request method</span>
+                <select className="request-node-input" onChange={onChangeMethod} defaultValue={method}>
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
             </div>
             
-            <button className="bg-teal-700 p-1 rounded-md">
-                <span className="uppercase text-gray-200 font-semibold">save</span>
+            <button 
+                className={`bg-teal-700 
+                p-1 rounded-md 
+                text-gray-200 
+                ${indicator && 'hover:bg-teal-600'}  
+                ${!indicator && 'bg-teal-950 text-slate-600 dragable'}`} 
+                disabled={!indicator}
+                onClick={saveNodeRequest}
+            >
+                <span className="uppercase font-semibold">save</span>
             </button>
 
 
         </div>
 
-        <Handle position={Position.Right} type="source" id="aa" className="h-4 w-2 rounded-sm border border-gray-400 bg-emerald-600"/>
+        <Handle position={Position.Right} type="source" className="h-4 w-2 rounded-sm border border-gray-400 bg-emerald-600"/>
 
     </div>
 }
 
-const hook = () => {
+const hook = (props: NodeProps) => {
+    type TMethods = "GET" | "POST" | "PUT" | "DELETE"
+    
+    const { selectedService } = useContext(AppContext)
+    const [path, setPath] = useState<string>(props.data.path ?? '')
+    const [method, setMethod] = useState<TMethods>(props.data.method ?? '')
     const [indicator, setIndicator] = useState<boolean>(false)
-    const [name, setName] = useState<string>('')
-    const [edit, setEdit] = useState<boolean>(false)
 
-    const handleEdit = () => {
-        setEdit(!edit)
+    const onChangePath: React.ChangeEventHandler<HTMLInputElement> = (evt) => {
+        setIndicator(true)
+        setPath(evt.target.value)
     }
 
-    return { name, edit, indicator, handleEdit }
+    const onChangeMethod: React.ChangeEventHandler<HTMLSelectElement> = (evt) => {
+        setIndicator(true)
+        setMethod(evt.target.value as TMethods)
+    }
+
+    const saveNodeRequest = () => {
+        setIndicator(false)
+        console.log(path)
+        window.ipcRenderer.invoke('services:create-endpoint', selectedService, props.id, props.xPos, props.yPos, path, method)
+    }
+
+    return { indicator, method, onChangePath, onChangeMethod, saveNodeRequest }
 }
