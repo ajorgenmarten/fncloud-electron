@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { ModelData, ServiceData, ServiceTemplate } from "./types"
+import { ModelData, NodeRequestPropsData, ServiceData, ServiceTemplate } from "./types"
 import { ServiceJson } from "../../electron/src/types"
 
 export const useModel = () => {
@@ -93,7 +93,7 @@ export const useServices = () => {
         setSelectedService(name)
     }
 
-    const loadAllServices = async () => {
+    const getAllServices = async () => {
         const services = await window.ipcRenderer.invoke('services:get-all')
         setServices( services )
     }
@@ -103,10 +103,14 @@ export const useServices = () => {
         setTemplates(templates)
     }
 
+    const saveEndPoint = (id: string, xpos: number, ypos: number, path: string, method: NodeRequestPropsData['method']) => {
+        window.ipcRenderer.invoke('services:create-endpoint', selectedService, id, xpos, ypos, path, method )
+    }
+
     useEffect(() => {
-        loadAllServices()
+        getAllServices()
         loadAllServiceTemplates()
     }, [])
 
-    return { services, selectedService, templates, createService, renameService, deleteService, selectService }
+    return { services, selectedService, templates, createService, renameService, deleteService, selectService, saveEndPoint }
 }

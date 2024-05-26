@@ -1,15 +1,17 @@
 import { Handle, NodeProps, Position } from "reactflow";
 import { useContext, useState } from "react";
 import { AppContext } from "../../../app/context";
+import { useNode } from "./hook";
+import { NodeRequestPropsData } from "../../../app/types";
 
  
-export function RequestNode (props: NodeProps) {
+export function RequestNode (props: NodeProps<NodeRequestPropsData>) { 
 
-    const { indicator, method, onChangePath, onChangeMethod, saveNodeRequest } = hook(props)
+    const { path, indicator, method, errorMsg, onChangePath, onChangeMethod, saveFunc } = hook(props)
 
-    return <div className="w-60 bg-slate-900 p-2 rounded-md shadow-xl">
+    return <div className="w-60 bg-slate-900 p-2 rounded-md shadow-xl ">
 
-        <div className="flex items-center mb-4 border-b-[1px] border-gray-600">
+        <div className="flex items-center mb-4 border-b-[1px] border-gray-600 cursor-grab active:cursor-grabbing">
 
             { indicator && <i className="bi bi-circle-fill text-[6px] ml-1 text-white"></i> }
 
@@ -32,7 +34,7 @@ export function RequestNode (props: NodeProps) {
 
             <div>
                 <span className="uppercase text-gray-400">Endpoint path</span>
-                <input type="text" className="request-node-input nodrag" value={props.data.path} spellCheck={false} onChange={onChangePath}/>
+                <input type="text" className="request-node-input nodrag" value={path} spellCheck={false} onChange={onChangePath}/>
             </div>
 
             <div>
@@ -47,12 +49,13 @@ export function RequestNode (props: NodeProps) {
             
             <button 
                 className={`bg-teal-700 
+                mt-2
                 p-1 rounded-md 
                 text-gray-200 
-                ${indicator && 'hover:bg-teal-600'}  
+                ${indicator && 'hover:bg-teal-500 active:bg-teal-600'}  
                 ${!indicator && 'bg-teal-950 text-slate-600 dragable'}`} 
                 disabled={!indicator}
-                onClick={saveNodeRequest}
+                onClick={saveFunc}
             >
                 <span className="uppercase font-semibold">save</span>
             </button>
@@ -60,18 +63,29 @@ export function RequestNode (props: NodeProps) {
 
         </div>
 
+        { 
+        
+            errorMsg != null &&
+        
+            <div className="absolute w-full left-0 mt-4 rounded-md p-1 text-white bg-rose-500">
+                <i className="bi bi-exclamation-triangle text-rose-900"></i> {errorMsg} asdasd
+            </div>
+        }
+
         <Handle position={Position.Right} type="source" className="h-4 w-2 rounded-sm border border-gray-400 bg-emerald-600"/>
 
     </div>
 }
 
-const hook = (props: NodeProps) => {
+const hook = (props: NodeProps<NodeRequestPropsData>) => {
     type TMethods = "GET" | "POST" | "PUT" | "DELETE"
     
-    const { selectedService } = useContext(AppContext)
-    const [path, setPath] = useState<string>(props.data.path ?? '')
-    const [method, setMethod] = useState<TMethods>(props.data.method ?? '')
-    const [indicator, setIndicator] = useState<boolean>(false)
+    const { saveEndPoint } = useContext(AppContext)
+    const [path, setPath] = useState<string>(props.data?.path ?? '')
+    const [method, setMethod] = useState<TMethods>(props.data?.method ?? '')
+    const saveCallback = () => saveEndPoint && saveEndPoint(props.id, props.xPos, props.yPos, path, method)
+
+    const { indicator, errorMsg, setIndicator, saveFunc } = useNode(saveCallback, undefined, props.data?.indicator)
 
     const onChangePath: React.ChangeEventHandler<HTMLInputElement> = (evt) => {
         setIndicator(true)
@@ -83,11 +97,5 @@ const hook = (props: NodeProps) => {
         setMethod(evt.target.value as TMethods)
     }
 
-    const saveNodeRequest = () => {
-        setIndicator(false)
-        console.log(path)
-        window.ipcRenderer.invoke('services:create-endpoint', selectedService, props.id, props.xPos, props.yPos, path, method)
-    }
-
-    return { indicator, method, onChangePath, onChangeMethod, saveNodeRequest }
+    return { path, indicator, method, errorMsg, onChangePath, onChangeMethod, saveFunc }
 }

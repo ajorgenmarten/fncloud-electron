@@ -1,6 +1,6 @@
 import { IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
-import { EndPointNode, ModelData, ServiceData, ServiceTemplate } from '../../src/app/types'
+import { EndPointNode, ModelData, ResponseNode, ServiceData, ServiceTemplate } from '../../src/app/types'
 import { ServiceJson } from './types'
 
 function getAllModels ():ModelData[] {
@@ -75,7 +75,10 @@ function deleteModel (_evt: IpcMainInvokeEvent, name: string) {
 
 
 function createService (_evt: IpcMainInvokeEvent, name: string) {
-    fs.writeFileSync(`./project/services/template-${name}.json`, '{ "endPoints": [] }')
+    fs.writeFileSync(`./project/services/template-${name}.json`, JSON.stringify({
+        endPoints: [],
+        responses: []
+    }))
     return true
 }
 
@@ -127,6 +130,20 @@ function getAllObjectTemplates() {
                         return { name, template: obj } as ServiceTemplate
                     })
     return names
+}
+
+function saveResponse(_evt: IpcMainInvokeEvent, serviceName: string, id: string, xPos: number, yPos: number, success: string ) {
+    const json = objectTemplate(serviceName)
+    const findIndex = json.responses.findIndex( ep => ep.id == id )
+    if ( findIndex == -1 ) {
+        const response: ResponseNode = { connectTo: null, id, xPos, yPos, success }
+        json.responses.push(response)
+    } else {
+        json.responses[findIndex].success = success
+
+    }
+    fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
+    return json
 }
 
 function templatePath(name: string) { return `./project/services/template-${name}.json` }
@@ -203,4 +220,5 @@ export const invokes = {
     'services:create-endpoint': saveEndPoint,
     'services:get-template': getTemplate,
     'services:get-all-templates': getAllObjectTemplates,
+    'services:create-response': saveResponse,
 }

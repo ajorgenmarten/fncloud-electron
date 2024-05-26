@@ -38,10 +38,25 @@ export interface IfNode extends FlowNode {
 }
 
 export interface ResponseNode extends FlowNode {
-    success: boolean
+    success: NodeResponsePropsData['success']
     data?: any
 }
 
 export interface CodeNode extends FlowNode {
     codePath: string
+}
+
+export interface NodePropsData {
+    indicator: boolean
+}
+
+
+// node porps
+export interface NodeRequestPropsData extends NodePropsData {
+    path: string
+    method: "GET" | "POST" | "PUT" | "DELETE"
+}
+
+export interface NodeResponsePropsData extends NodePropsData {
+    success: 'ok' | 'bad'
 }

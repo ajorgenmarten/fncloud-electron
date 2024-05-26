@@ -1,11 +1,15 @@
 import ReactFlow, { Background } from "reactflow";
 import { FlowPanel } from "./panel";
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { FlowContext } from "./context/context";
 import './styles.css'
 
 export function Flow() {
   const { nodes, edges, nodeTypes, onNodesChange, onEdgesChange } = useContext(FlowContext)
+
+  useEffect(() => {
+    console.log(nodes)
+  }, [nodes])
   
   return <div className="w-full h-full grow">
     <ReactFlow 
@@ -13,6 +17,7 @@ export function Flow() {
       nodeTypes={nodeTypes}
       edges={edges}
       defaultEdgeOptions={{ animated: true, data: 'hola mundo' }}
+      onConnect={(connection) => { console.log(connection) }}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}>
       <FlowPanel />
