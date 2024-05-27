@@ -1,4 +1,4 @@
-import { EndPointNode, ResponseNode } from "../../src/app/types";
+import { EndPointNode, ITemplateJson, ResponseNode } from "../../src/app/types";
 
 export interface FileModel {
     name: string,
@@ -6,7 +6,7 @@ export interface FileModel {
     content: string,
 }
 
-export interface ServiceJson {
-    endPoints: EndPointNode[],
-    responses: ResponseNode[]
+export interface  IObjectTemplate {
+    templateName: string
+    template: ITemplateJson
 }

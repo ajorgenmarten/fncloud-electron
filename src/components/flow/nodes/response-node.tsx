@@ -1,11 +1,10 @@
-import { useContext, useState } from "react";
 import { Handle, NodeProps, Position } from "reactflow";
-import { AppContext } from "../../../app/context";
 import { useNode } from "./hook";
-import { NodeResponsePropsData } from "../../../app/types";
+import { IResponseNodeData } from "../../../app/types";
+import { useState } from "react";
 
-export function ResponseNode (props: NodeProps<NodeResponsePropsData>) {
-    const { success, indicator, changeStatus, saveFunc } = hook(props)
+export function ResponseNode (props: NodeProps<IResponseNodeData>) {
+    const { success, indicator, changeStatus, onSave } = hook(props)
 
     return <div className="flex w-40 flex-col bg-slate-900 p-2 rounded-md text-slate-400">
         <div className="flex items-center mb-2">
@@ -25,7 +24,7 @@ export function ResponseNode (props: NodeProps<NodeResponsePropsData>) {
                 ${indicator && 'hover:bg-teal-500 active:bg-teal-600'}  
                 ${!indicator && 'bg-teal-950 text-slate-600 dragable'}`} 
                 disabled={!indicator}
-                onClick={saveFunc}
+                onClick={onSave}
             >
                 <span className="uppercase font-semibold">save</span>
             </button>
@@ -33,19 +32,15 @@ export function ResponseNode (props: NodeProps<NodeResponsePropsData>) {
     </div>
 }
 
-const hook = (props: NodeProps<NodeResponsePropsData>) => {
+const hook = (props: NodeProps<IResponseNodeData>) => {
+    const [success, setSuccess] = useState<IResponseNodeData['success']>(props.data?.success ?? 'ok')
 
-    const {selectedService} = useContext(AppContext)
-    const [success, setSuccess] = useState<NodeResponsePropsData['success']>(props.data?.success ?? 'ok')
-
-    const { indicator, setIndicator, saveFunc } = useNode(() => {
-        window.ipcRenderer.invoke('services:create-response', selectedService, props.id, props.xPos, props.yPos, success)
-    }, undefined, props.data?.indicator)
+    const { indicator, setIndicator, onSave } = useNode(props)
 
     const changeStatus: React.ChangeEventHandler<HTMLSelectElement> = (evt) =>{
         setIndicator(true)
-        setSuccess(evt.target.value as NodeResponsePropsData['success'])
+        setSuccess(evt.target.value as IResponseNodeData['success'])
     }
     
-    return { success, indicator, changeStatus, saveFunc }
+    return { success, indicator, changeStatus, onSave }
 }

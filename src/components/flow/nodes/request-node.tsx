@@ -1,13 +1,13 @@
-import { Handle, NodeProps, Position } from "reactflow";
-import { useContext, useState } from "react";
-import { AppContext } from "../../../app/context";
+import { Handle, Position } from "reactflow";
 import { useNode } from "./hook";
-import { NodeRequestPropsData } from "../../../app/types";
+import { IRequestNodeData } from "../../../app/types";
+import { useState } from "react";
+import { NodeProps } from "reactflow";
 
  
-export function RequestNode (props: NodeProps<NodeRequestPropsData>) { 
+export function RequestNode (props: NodeProps<IRequestNodeData>) { 
 
-    const { path, indicator, method, errorMsg, onChangePath, onChangeMethod, saveFunc } = hook(props)
+    const { path, indicator, method, errorMsg, onChangePath, onChangeMethod, onSave } = hook(props)
 
     return <div className="w-60 bg-slate-900 p-2 rounded-md shadow-xl ">
 
@@ -55,7 +55,7 @@ export function RequestNode (props: NodeProps<NodeRequestPropsData>) {
                 ${indicator && 'hover:bg-teal-500 active:bg-teal-600'}  
                 ${!indicator && 'bg-teal-950 text-slate-600 dragable'}`} 
                 disabled={!indicator}
-                onClick={saveFunc}
+                onClick={onSave}
             >
                 <span className="uppercase font-semibold">save</span>
             </button>
@@ -68,7 +68,7 @@ export function RequestNode (props: NodeProps<NodeRequestPropsData>) {
             errorMsg != null &&
         
             <div className="absolute w-full left-0 mt-4 rounded-md p-1 text-white bg-rose-500">
-                <i className="bi bi-exclamation-triangle text-rose-900"></i> {errorMsg} asdasd
+                <i className="bi bi-exclamation-triangle text-rose-900"></i> {errorMsg}
             </div>
         }
 
@@ -77,25 +77,29 @@ export function RequestNode (props: NodeProps<NodeRequestPropsData>) {
     </div>
 }
 
-const hook = (props: NodeProps<NodeRequestPropsData>) => {
-    type TMethods = "GET" | "POST" | "PUT" | "DELETE"
-    
-    const { saveEndPoint } = useContext(AppContext)
-    const [path, setPath] = useState<string>(props.data?.path ?? '')
-    const [method, setMethod] = useState<TMethods>(props.data?.method ?? '')
-    const saveCallback = () => saveEndPoint && saveEndPoint(props.id, props.xPos, props.yPos, path, method)
+const hook = (props: NodeProps<IRequestNodeData>) => {
 
-    const { indicator, errorMsg, setIndicator, saveFunc } = useNode(saveCallback, undefined, props.data?.indicator)
+    const [path, setPath] = useState<string>(props.data?.path ?? '')
+    const [method, setMethod] = useState<IRequestNodeData['method']>(props.data?.method ?? 'GET')
+
+    const validationCallback = (props: NodeProps<IRequestNodeData>) => {
+        if (path.length == 0) throw new Error('Set a path for the request')
+        return true
+    }
+    const { indicator, errorMsg, setIndicator, onSave } = useNode(props, validationCallback)
+
 
     const onChangePath: React.ChangeEventHandler<HTMLInputElement> = (evt) => {
         setIndicator(true)
         setPath(evt.target.value)
+        props.data.path = evt.target.value
     }
 
     const onChangeMethod: React.ChangeEventHandler<HTMLSelectElement> = (evt) => {
         setIndicator(true)
-        setMethod(evt.target.value as TMethods)
+        setMethod(evt.target.value as IRequestNodeData['method'])
+        props.data.method = evt.target.value as IRequestNodeData['method']
     }
 
-    return { path, indicator, method, errorMsg, onChangePath, onChangeMethod, saveFunc }
+    return { path, indicator, method, errorMsg, onChangePath, onChangeMethod, onSave }
 }

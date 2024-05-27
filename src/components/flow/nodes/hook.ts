@@ -1,25 +1,30 @@
-import { useCallback, useState } from "react"
+import { useContext, useState } from "react"
+import { AppContext } from "../../../app/context"
+import { NodeProps } from "reactflow"
 
-export const useNode = (saveCallback?: Function, validationCallback?: Function, indicatorStatus?: boolean) => {
-    const [indicator, setIndicator] = useState<boolean>(indicatorStatus ?? true)
+export const useNode = (props: NodeProps, validateCallback?: Function) => {
+    const { selectedService } = useContext(AppContext)
+    const [indicator, setIndicator] = useState<boolean>(props.data?.indicator ?? false)
     const [errorMsg, setErrorMsg] = useState<string|null>(null)
 
-    const saveFunc = useCallback(async () => {
+    const onSave = async () => {
         try {
             let validationResult
-            if ( validationCallback ) {
-                validationResult = await validationCallback()
+            if ( validateCallback ) {
+                validationResult = await validateCallback(props)
             } else validationResult = true
             if ( validationResult ) {
-                setIndicator(false)
                 setErrorMsg(null)
-                saveCallback && saveCallback
+                setIndicator(false)
+                window.ipcRenderer.invoke('services:save-node', selectedService, props)
             }
         } catch (error) {
-            const message = (error as Error).message
-            setErrorMsg(message)
+            setErrorMsg((error as Error).message)
         }
-    }, [])
+    }
 
-    return { indicator, errorMsg, setIndicator, saveFunc }
+    return {indicator, errorMsg, setIndicator, onSave}
+}
+
+export const useHandlers = () => {
 }

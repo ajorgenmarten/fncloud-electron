@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { ModelData, NodeRequestPropsData, ServiceData, ServiceTemplate } from "./types"
-import { ServiceJson } from "../../electron/src/types"
+import { ModelData, ServiceData } from "./types"
+import { IObjectTemplate } from "../../electron/src/types"
 
 export const useModel = () => {
     const [models, setmodels] = useState<ModelData[]>([])
@@ -64,7 +64,7 @@ export const useModel = () => {
 export const useServices = () => {
     const [services, setServices] = useState<ServiceData[]>([])
     const [selectedService, setSelectedService] = useState<string|null>(null)
-    const [templates, setTemplates] = useState<ServiceTemplate[]>([])
+    const [templates, setTemplates] = useState<IObjectTemplate[]>([])
 
     const getIndex = (name: string) => {
         return services.findIndex(s => s.name == name)
@@ -103,14 +103,10 @@ export const useServices = () => {
         setTemplates(templates)
     }
 
-    const saveEndPoint = (id: string, xpos: number, ypos: number, path: string, method: NodeRequestPropsData['method']) => {
-        window.ipcRenderer.invoke('services:create-endpoint', selectedService, id, xpos, ypos, path, method )
-    }
-
     useEffect(() => {
         getAllServices()
         loadAllServiceTemplates()
     }, [])
 
-    return { services, selectedService, templates, createService, renameService, deleteService, selectService, saveEndPoint }
+    return { services, selectedService, templates, createService, renameService, deleteService, selectService }
 }

@@ -1,7 +1,8 @@
 import { IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
-import { EndPointNode, ModelData, ResponseNode, ServiceData, ServiceTemplate } from '../../src/app/types'
-import { ServiceJson } from './types'
+import { INodeData, ITemplateJson, ModelData, ServiceData } from '../../src/app/types'
+import { EdgeProps, NodeProps } from 'reactflow'
+import { IObjectTemplate } from './types'
 
 function getAllModels ():ModelData[] {
     const models = fs.readdirSync('./project/models').map(model => model.split('.')[0])
@@ -76,8 +77,8 @@ function deleteModel (_evt: IpcMainInvokeEvent, name: string) {
 
 function createService (_evt: IpcMainInvokeEvent, name: string) {
     fs.writeFileSync(`./project/services/template-${name}.json`, JSON.stringify({
-        endPoints: [],
-        responses: []
+        nodes: [],
+        connections: [],
     }))
     return true
 }
@@ -100,18 +101,72 @@ function deleteService (_evt: IpcMainInvokeEvent, name: string) {
     fs.unlinkSync(`./project/services/template-${name}.json`)
 }
 
-function saveEndPoint (_evt: IpcMainInvokeEvent, serviceName: string, id: string, xPos:number, yPos:number, path: string, method: EndPointNode['method']) {
-    const json = objectTemplate(serviceName)
-    const findIndex = json.endPoints.findIndex( ep => ep.id == id )
-    if ( findIndex == -1 ) {
-        const endpoint: EndPointNode = { connectTo: null, id, path, xPos, yPos, method }
-        json.endPoints.push(endpoint)
-    } else {
-        json.endPoints[findIndex].path = path
-        json.endPoints[findIndex].method = method
-        json.endPoints[findIndex].xPos = xPos
-        json.endPoints[findIndex].yPos = yPos
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function saveNode (_evt: IpcMainInvokeEvent, serviceName: string, props: NodeProps<INodeData> ) {
+    const json = objectTemplate(serviceName)
+    const findIndex = json.nodes.findIndex(node => node.id == props.id)
+    if (findIndex == -1) {
+        json.nodes.push(props)
+    } else {
+        json.nodes[findIndex] = props
     }
     fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
     return json
@@ -121,27 +176,27 @@ function getTemplate(_evt: IpcMainInvokeEvent, serviceName: string) {
     return objectTemplate(serviceName)
 }
 
-function getAllObjectTemplates() {
+function getAllObjectTemplates(): IObjectTemplate[] {
     // lee directorio de los templates, obtiene el nombre y retorna nombre y objeto del json
     const names = fs.readdirSync('./project/services')
                     .map(template => {
-                        const name = template.split('template-')[1].slice(0,-5)
-                        const obj = objectTemplate(name)
-                        return { name, template: obj } as ServiceTemplate
+                        const templateName = template.split('template-')[1].slice(0,-5)
+                        const templateJson = objectTemplate(templateName)
+                        return { templateName, template: templateJson }
                     })
     return names
 }
 
-function saveResponse(_evt: IpcMainInvokeEvent, serviceName: string, id: string, xPos: number, yPos: number, success: string ) {
+function saveConnection (_evt: IpcMainInvokeEvent, serviceName: string, props: EdgeProps[]) {
     const json = objectTemplate(serviceName)
-    const findIndex = json.responses.findIndex( ep => ep.id == id )
-    if ( findIndex == -1 ) {
-        const response: ResponseNode = { connectTo: null, id, xPos, yPos, success }
-        json.responses.push(response)
-    } else {
-        json.responses[findIndex].success = success
-
-    }
+    props.forEach((connection) => {
+        const findIndex = json.connections.findIndex(edge => edge.id == connection.id)
+        if (findIndex == -1) {
+            json.connections.push(connection)
+        } else {
+            json.connections[findIndex] = connection
+        }
+    })
     fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
     return json
 }
@@ -150,7 +205,7 @@ function templatePath(name: string) { return `./project/services/template-${name
 
 function objectTemplate(name: string) {
     const jsonPath = templatePath(name)
-    const json = JSON.parse ( fs.readFileSync(jsonPath).toString() ) as ServiceJson
+    const json = JSON.parse ( fs.readFileSync(jsonPath).toString() ) as ITemplateJson
     return json
 }
 
@@ -217,8 +272,9 @@ export const invokes = {
     'services:rename': renameService,
     'services:delete': deleteService,
 
-    'services:create-endpoint': saveEndPoint,
+    'services:save-node': saveNode,
+    'services:save-connection': saveConnection,
+
     'services:get-template': getTemplate,
     'services:get-all-templates': getAllObjectTemplates,
-    'services:create-response': saveResponse,
 }

@@ -1,14 +1,17 @@
-import { useContext, useEffect, useMemo } from "react";
-import { Node, useEdgesState, useNodesState } from "reactflow";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, EdgeProps } from "reactflow";
 import { RequestNode } from "../nodes/request-node";
 import { ResponseNode } from "../nodes/response-node";
 import { ConditionNode } from "../nodes/condition-node";
 import { CodeNode } from "../nodes/code-node";
 import { AppContext } from "../../../app/context";
-import { NodeRequestPropsData, NodeResponsePropsData } from "../../../app/types";
+import { IRequestNodeData, IResponseNodeData } from "../../../app/types";
+
 
 export function useFlow() {
     const { selectedService, templates } = useContext(AppContext)
+    
+    const [showSaveConnections, setShowSaveConnections] = useState<boolean>(false)
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -18,7 +21,7 @@ export function useFlow() {
         const position = {x:50, y:50}
         const type = 'RequestNode'
         const id = 'request-node-' + crypto.randomUUID()
-        const node: Node = { position, type, id, data: null }
+        const node: Node<IRequestNodeData> = { position, type, id, data: { path: '', method: 'GET' } }
         setNodes( [...nodes, node] )
     }
 
@@ -26,7 +29,7 @@ export function useFlow() {
         const position = {x:250, y:50}
         const type= 'ResponseNode'
         const id = 'response-node-' + crypto.randomUUID()
-        const node: Node = { position, type, id, data: null }
+        const node: Node<IResponseNodeData> = { position, type, id, data: { success: 'OK' } }
         setNodes( [...nodes, node] )
     }
 
@@ -47,25 +50,71 @@ export function useFlow() {
     }
 
     const renderNodes = () => {
-        const template = templates?.find(t => t.name == selectedService)
+        setNodes([])
+
+        const parseNodeToNodeProps = (nodeprop: NodeProps): Node => {
+            return {
+                id: nodeprop.id,
+                data: nodeprop.data,
+                position: { x: nodeprop.xPos, y: nodeprop.yPos },
+                type: nodeprop.type
+            }
+        }
+
+        const template = templates?.find(t => t.templateName == selectedService)
         if ( !template ) return
-        const requestNodes: Node<NodeRequestPropsData>[] = template.template.endPoints.map(t => {
-            const data: NodeRequestPropsData = { indicator: false, method: t.method, path: t.path }
-            const node: Node<NodeRequestPropsData> = { id: t.id, data, position: { x: t.xPos, y: t.yPos }, type: 'RequestNode' }
-            return node
-        })
-        const responseNodes: Node<NodeResponsePropsData>[] = template.template.responses.map(t => {
-            const data: NodeResponsePropsData = { indicator: false, success: t.success }
-            const node: Node<NodeResponsePropsData> = { id: t.id, data, position: {x: t.xPos, y: t.yPos}, type: 'ResponseNode' }
-            return node
-        })
-        setNodes([...requestNodes, ...responseNodes])
+
+        const nodes = template.template.nodes.map(n => parseNodeToNodeProps(n))
+        setNodes([...nodes])
+    }
+
+    const renderEdges = () => {
+        setEdges([])
+
+        const parseEdgetoEdgeProps = (edge: EdgeProps): Edge => {
+            return {
+                id: edge.id,
+                source: edge.source,
+                target: edge.target,
+                sourceHandle: edge.sourceHandleId,
+                targetHandle: edge.targetHandleId
+            }
+        }
+
+        const template = templates?.find(t => t.templateName == selectedService)
+        if ( !template ) return
+
+        const edges = template.template.connections.map(n => parseEdgetoEdgeProps(n))
+        setEdges(edges)
+        
+    }
+
+    const onConnect = useCallback((connection: Connection) => {
+        console.log(connection)
+        // comprobar si existe una conexion con ese source
+        const hasEdge = edges.find( edge => edge.source == connection.source)
+        if ( hasEdge ) return
+
+        const target: Node = nodes.find(n => n.id == connection.target) as Node
+        const source: Node = nodes.find(n => n.id == connection.source) as Node
+
+        if (target.type == "ConditionalNode" && source.type != "CodeNode") return
+        
+        const edge: Edge = { id: `${crypto.randomUUID()}`, source: connection.source as string, target: connection.target as string }
+        setEdges([...edges, edge])
+        
+        setShowSaveConnections(true)
+    }, [edges] )
+
+    const saveConnection = () => {
+        window.ipcRenderer.invoke('services:save-connection', selectedService, edges)
+        setShowSaveConnections(false)
     }
     
     useEffect(() => {
-        setNodes([])
         renderNodes()
+        renderEdges()
     }, [selectedService])
 
-    return { nodes, edges, nodeTypes, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode }
+    return { nodes, edges, nodeTypes, showSaveConnections, onConnect, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, saveConnection }
 }
