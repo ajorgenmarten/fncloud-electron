@@ -9,7 +9,7 @@ import { IRequestNodeData, IResponseNodeData } from "../../../app/types";
 
 
 export function useFlow() {
-    const { selectedService, templates } = useContext(AppContext)
+    const { selectedService, templates, updateTemplate } = useContext(AppContext)
     
     const [showSaveConnections, setShowSaveConnections] = useState<boolean>(false)
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -21,7 +21,7 @@ export function useFlow() {
         const position = {x:50, y:50}
         const type = 'RequestNode'
         const id = 'request-node-' + crypto.randomUUID()
-        const node: Node<IRequestNodeData> = { position, type, id, data: { path: '', method: 'GET' } }
+        const node: Node<IRequestNodeData> = { position, type, id, data: { path: '', method: 'GET', indicator: true } }
         setNodes( [...nodes, node] )
     }
 
@@ -29,7 +29,7 @@ export function useFlow() {
         const position = {x:250, y:50}
         const type= 'ResponseNode'
         const id = 'response-node-' + crypto.randomUUID()
-        const node: Node<IResponseNodeData> = { position, type, id, data: { success: 'OK' } }
+        const node: Node<IResponseNodeData> = { position, type, id, data: { success: 'OK', indicator: true } }
         setNodes( [...nodes, node] )
     }
 
@@ -98,17 +98,21 @@ export function useFlow() {
         const target: Node = nodes.find(n => n.id == connection.target) as Node
         const source: Node = nodes.find(n => n.id == connection.source) as Node
 
+        if (!templates?.find(t => t.templateName == selectedService)?.template.nodes.find(n => n.id == target.id)) return
+        if (!templates?.find(t => t.templateName == selectedService)?.template.nodes.find(n => n.id == source.id)) return
+
         if (target.type == "ConditionalNode" && source.type != "CodeNode") return
         
         const edge: Edge = { id: `${crypto.randomUUID()}`, source: connection.source as string, target: connection.target as string }
         setEdges([...edges, edge])
         
         setShowSaveConnections(true)
-    }, [edges] )
+    }, [nodes, edges] )
 
-    const saveConnection = () => {
-        window.ipcRenderer.invoke('services:save-connection', selectedService, edges)
+    const saveConnection = async () => {
+        const templateJson = await window.ipcRenderer.invoke('services:save-connection', selectedService, edges)
         setShowSaveConnections(false)
+        updateTemplate && updateTemplate({ templateName: selectedService as string, template: templateJson })
     }
     
     useEffect(() => {

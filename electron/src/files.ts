@@ -172,8 +172,8 @@ function saveNode (_evt: IpcMainInvokeEvent, serviceName: string, props: NodePro
     return json
 }
 
-function getTemplate(_evt: IpcMainInvokeEvent, serviceName: string) {
-    return objectTemplate(serviceName)
+function getTemplate(_evt: IpcMainInvokeEvent, serviceName: string): IObjectTemplate {
+    return { templateName: serviceName, template: objectTemplate(serviceName)}
 }
 
 function getAllObjectTemplates(): IObjectTemplate[] {

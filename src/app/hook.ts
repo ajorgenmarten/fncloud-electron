@@ -66,27 +66,38 @@ export const useServices = () => {
     const [selectedService, setSelectedService] = useState<string|null>(null)
     const [templates, setTemplates] = useState<IObjectTemplate[]>([])
 
-    const getIndex = (name: string) => {
+    const getServiceIndex = (name: string) => {
         return services.findIndex(s => s.name == name)
     }
+    const getTemplateIndex = (name: string) => {
+        return templates.findIndex(t => t.templateName == name)
+    } 
 
     const createService = async (name: string) => {
         await window.ipcRenderer.invoke('services:create', name)
+        loadServiceTemplate(name)
         setServices([...services, { name }])
     }
 
     const renameService = async (name: string, newName: string) => {
         await window.ipcRenderer.invoke('services:rename', name, newName)
-        const index = getIndex(name)
-        services[index].name = newName
+        const serviceIndex = getServiceIndex(name)
+        const templateIndex = getTemplateIndex(name)
+        templates[templateIndex].templateName = newName
+        services[serviceIndex].name = newName
         setServices([...services])
+        setTemplates([...templates])
     }
 
     const deleteService = async (name: string) => {
         await window.ipcRenderer.invoke('services:delete', name)
-        const index = getIndex(name)
-        services.splice(index, 1)
+        const serviceIndex = getServiceIndex(name)
+        const templateIndex = getTemplateIndex(name)
+        services.splice(serviceIndex, 1)
+        templates.splice(templateIndex, 1)
         setServices([...services])
+        setTemplates([...templates])
+        setSelectedService(null)
     }
 
     const selectService = async (name: string|null) => {
@@ -103,10 +114,25 @@ export const useServices = () => {
         setTemplates(templates)
     }
 
+    const loadServiceTemplate = async (name: string) => {
+        const template = await window.ipcRenderer.invoke('services:get-template', name)
+        setTemplates([...templates, template])
+    }
+
+    const updateTemplate = (template: IObjectTemplate) => {
+        const findIndex = templates.findIndex(t => t.templateName == template.templateName)
+        templates[findIndex] = template
+        setTemplates([...templates])
+    }
+
+    useEffect(() => {
+        console.log(templates)
+    }, [templates])
+
     useEffect(() => {
         getAllServices()
         loadAllServiceTemplates()
     }, [])
 
-    return { services, selectedService, templates, createService, renameService, deleteService, selectService }
+    return { services, selectedService, templates, createService, renameService, deleteService, selectService, updateTemplate }
 }
