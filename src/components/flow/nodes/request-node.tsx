@@ -34,12 +34,12 @@ export function RequestNode (props: NodeProps<IRequestNodeData>) {
 
             <div>
                 <span className="uppercase text-gray-400">Endpoint path</span>
-                <input type="text" className="request-node-input nodrag" value={path} spellCheck={false} onChange={onChangePath}/>
+                <input type="text" className="node-input nodrag" value={path} spellCheck={false} onChange={onChangePath}/>
             </div>
 
             <div>
                 <span className="uppercase text-gray-400">Request method</span>
-                <select className="request-node-input" onChange={onChangeMethod} defaultValue={method}>
+                <select className="node-input" onChange={onChangeMethod} defaultValue={method}>
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
                     <option value="PUT">PUT</option>
@@ -82,7 +82,7 @@ const hook = (props: NodeProps<IRequestNodeData>) => {
     const [path, setPath] = useState<string>(props.data?.path ?? '')
     const [method, setMethod] = useState<IRequestNodeData['method']>(props.data?.method ?? 'GET')
 
-    const validationCallback = (props: NodeProps<IRequestNodeData>) => {
+    const validationCallback = () => {
         if (path.length == 0) throw new Error('Set a path for the request')
         return true
     }

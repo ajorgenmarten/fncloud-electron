@@ -109,6 +109,15 @@ export function useFlow() {
         setShowSaveConnections(true)
     }, [nodes, edges] )
 
+    const onNodesDelete = useCallback(async (nodes: Node[]) => {
+        const template = await window.ipcRenderer.invoke('services:delete-nodes', selectedService, nodes)
+        updateTemplate && updateTemplate(template)
+    }, [selectedService])
+
+    const onEdgesDelete = useCallback(async (edges: Edge[]) => {
+
+    }, [selectedService])
+
     const saveConnection = async () => {
         const templateJson = await window.ipcRenderer.invoke('services:save-connection', selectedService, edges)
         setShowSaveConnections(false)
@@ -120,5 +129,5 @@ export function useFlow() {
         renderEdges()
     }, [selectedService])
 
-    return { nodes, edges, nodeTypes, showSaveConnections, onConnect, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, saveConnection }
+    return { nodes, edges, nodeTypes, showSaveConnections, onConnect, onNodesDelete, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, saveConnection }
 }

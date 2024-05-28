@@ -29,12 +29,12 @@ export function FlowPanel () {
             <i className="bi bi-lightning-charge-fill text-3xl group-hover:text-emerald-400"></i>
         </button>
 
-        <button title="RESPONSE" className="w-14 h-14 border hover:bg-gray-800 border-gray-500 rounded-lg hover:border-emerald-300 group" onClick={handleCreateConditionNode}>
+        <button title="CONDITION" className="w-14 h-14 border hover:bg-gray-800 border-gray-500 rounded-lg hover:border-emerald-300 group" onClick={handleCreateConditionNode}>
             <i className="bi bi-question-circle text-3xl text-gray-300 group-hover:text-emerald-400"></i>
         </button>
 
-        <button title="RESPONSE" className="w-14 h-14 border hover:bg-gray-800 border-gray-500 rounded-lg hover:border-emerald-300 group" onClick={handleCreateCodeNode}>
-            <i className="bi bi-globe text-3xl text-gray-300 group-hover:text-emerald-400"></i>
+        <button title="CODE" className="w-14 h-14 border hover:bg-gray-800 border-gray-500 rounded-lg hover:border-emerald-300 group" onClick={handleCreateCodeNode}>
+            <i className="bi bi-code text-3xl text-gray-300 group-hover:text-emerald-400"></i>
         </button>
 
     </Panel>

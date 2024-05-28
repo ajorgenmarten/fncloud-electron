@@ -10,9 +10,10 @@ export function ResponseNode (props: NodeProps<IResponseNodeData>) {
         <div className="flex items-center mb-2">
             { indicator && <i className="bi bi-circle-fill mr-2 text-[6px] ml-1 text-white"></i> }
 
-            <span>RESPONSE</span>
+            <span className="grow">RESPONSE</span>
+            <i className="bi bi-lightning-charge-fill"></i>
         </div>
-        <select className="request-node-input" defaultValue={success} onChange={changeStatus}>
+        <select className="node-input" defaultValue={success} onChange={changeStatus}>
             <option value="ok">OK</option>
             <option value="bad">BAD</option>
         </select>

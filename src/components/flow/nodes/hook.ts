@@ -16,6 +16,7 @@ export const useNode = (props: NodeProps, validateCallback?: Function) => {
             if ( validationResult ) {
                 setErrorMsg(null)
                 setIndicator(false)
+                if ( props.data.indicator ) props.data.indicator = false
                 const template = await window.ipcRenderer.invoke('services:save-node', selectedService, props)
                 updateTemplate && updateTemplate({ templateName: selectedService as string, template })
             }

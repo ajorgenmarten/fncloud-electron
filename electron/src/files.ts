@@ -1,7 +1,7 @@
 import { IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
 import { INodeData, ITemplateJson, ModelData, ServiceData } from '../../src/app/types'
-import { EdgeProps, NodeProps } from 'reactflow'
+import { EdgeProps, Node, NodeProps } from 'reactflow'
 import { IObjectTemplate } from './types'
 
 function getAllModels ():ModelData[] {
@@ -201,6 +201,21 @@ function saveConnection (_evt: IpcMainInvokeEvent, serviceName: string, props: E
     return json
 }
 
+function deleteNodes (_event: IpcMainInvokeEvent, serviceName: string, nodes: Node[]): IObjectTemplate {
+    const json = objectTemplate(serviceName)
+    nodes.forEach(node => {
+        const findIndexNode = json.nodes.findIndex(n => n.id == node.id)
+        if (findIndexNode == -1) return
+        json.nodes.splice(findIndexNode, 1)
+        json.connections.forEach((edge, index) => {
+            if (edge.source == node.id || edge.target == node.id)
+                json.connections.splice(index, 1)
+        })
+    })
+    fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
+    return { templateName: serviceName, template: json }
+}
+
 function templatePath(name: string) { return `./project/services/template-${name}.json` }
 
 function objectTemplate(name: string) {
@@ -274,6 +289,7 @@ export const invokes = {
 
     'services:save-node': saveNode,
     'services:save-connection': saveConnection,
+    'services:delete-nodes': deleteNodes,
 
     'services:get-template': getTemplate,
     'services:get-all-templates': getAllObjectTemplates,

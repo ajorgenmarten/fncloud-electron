@@ -1,18 +1,10 @@
 import { useContext, useEffect, useRef } from "react"
 import { AppContext } from "../../app/context"
-import TSWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import * as monaco from 'monaco-editor'
 
 export function Editor() {
     const { models, selectedModel, saveData } = useContext(AppContext)
     const editorContainer = useRef<HTMLDivElement | null>(null)
-    
-
-    useEffect(() => {
-        window.MonacoEnvironment = {
-            getWorker() { return new TSWorker() },
-        }
-    }, [])
 
     useEffect(() => {
         let editor = monaco.editor.create(editorContainer.current as HTMLDivElement, { theme: 'vs-dark', padding: { top: 20 }, fontFamily: 'cascadia code' })
