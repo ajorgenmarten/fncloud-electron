@@ -207,10 +207,7 @@ function deleteNodes (_event: IpcMainInvokeEvent, serviceName: string, nodes: No
         const findIndexNode = json.nodes.findIndex(n => n.id == node.id)
         if (findIndexNode == -1) return
         json.nodes.splice(findIndexNode, 1)
-        json.connections.forEach((edge, index) => {
-            if (edge.source == node.id || edge.target == node.id)
-                json.connections.splice(index, 1)
-        })
+        json.connections = json.connections.filter(edge => edge.source != node.id && edge.target != node.id)
     })
     fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
     return { templateName: serviceName, template: json }
