@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo } from "react";
 import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, EdgeProps } from "reactflow";
 import { RequestNode } from "../nodes/request-node";
 import { ResponseNode } from "../nodes/response-node";
@@ -6,16 +6,17 @@ import { ConditionNode } from "../nodes/condition-node";
 import { CodeNode } from "../nodes/code-node";
 import { AppContext } from "../../../app/context";
 import { IRequestNodeData, IResponseNodeData } from "../../../app/types";
+import { CustomEdge } from "../edges/custom-edge";
 
 
 export function useFlow() {
     const { selectedService, templates, updateTemplate } = useContext(AppContext)
     
-    const [showSaveConnections, setShowSaveConnections] = useState<boolean>(false)
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
     const nodeTypes = useMemo(() => ({RequestNode, ResponseNode, ConditionNode, CodeNode}), [])
+    const edgeTypes = useMemo(() => ({CustomEdge}), [])
 
     const createRequestNode = () => {
         const position = {x:50, y:50}
@@ -103,10 +104,10 @@ export function useFlow() {
 
         if (target.type == "ConditionalNode" && source.type != "CodeNode") return
         
-        const edge: Edge = { id: `${crypto.randomUUID()}`, source: connection.source as string, target: connection.target as string }
+        const edge: Edge = { id: `${crypto.randomUUID()}`, source: connection.source as string, target: connection.target as string, type: "CustomEdge" }
+        window.ipcRenderer.invoke('services:save-connection', selectedService, edge)
         setEdges([...edges, edge])
-        
-        setShowSaveConnections(true)
+
     }, [nodes, edges] )
 
     const onNodesDelete = useCallback(async (nodes: Node[]) => {
@@ -115,19 +116,14 @@ export function useFlow() {
     }, [selectedService])
 
     const onEdgesDelete = useCallback(async (edges: Edge[]) => {
-
+        const template = await window.ipcRenderer.invoke('services:delete-connection', selectedService, edges)
+        updateTemplate && updateTemplate(template)
     }, [selectedService])
-
-    const saveConnection = async () => {
-        const templateJson = await window.ipcRenderer.invoke('services:save-connection', selectedService, edges)
-        setShowSaveConnections(false)
-        updateTemplate && updateTemplate({ templateName: selectedService as string, template: templateJson })
-    }
     
     useEffect(() => {
         renderNodes()
         renderEdges()
     }, [selectedService])
 
-    return { nodes, edges, nodeTypes, showSaveConnections, onConnect, onNodesDelete, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, saveConnection }
+    return { nodes, edges, nodeTypes, edgeTypes, onEdgesDelete, onConnect, onNodesDelete, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode }
 }

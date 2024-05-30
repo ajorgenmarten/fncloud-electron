@@ -1,7 +1,7 @@
 import { IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
 import { INodeData, ITemplateJson, ModelData, ServiceData } from '../../src/app/types'
-import { EdgeProps, Node, NodeProps } from 'reactflow'
+import { Edge, EdgeProps, Node, NodeProps } from 'reactflow'
 import { IObjectTemplate } from './types'
 
 function getAllModels ():ModelData[] {
@@ -187,16 +187,12 @@ function getAllObjectTemplates(): IObjectTemplate[] {
     return names
 }
 
-function saveConnection (_evt: IpcMainInvokeEvent, serviceName: string, props: EdgeProps[]) {
+function saveConnection (_evt: IpcMainInvokeEvent, serviceName: string, props: EdgeProps ) {
     const json = objectTemplate(serviceName)
-    props.forEach((connection) => {
-        const findIndex = json.connections.findIndex(edge => edge.id == connection.id)
-        if (findIndex == -1) {
-            json.connections.push(connection)
-        } else {
-            json.connections[findIndex] = connection
-        }
-    })
+    const findIndex = json.connections.findIndex(edge => edge.id == props.id)
+    if ( findIndex == -1 ) {
+        json.connections.push(props)
+    }
     fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
     return json
 }
@@ -211,6 +207,17 @@ function deleteNodes (_event: IpcMainInvokeEvent, serviceName: string, nodes: No
     })
     fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
     return { templateName: serviceName, template: json }
+}
+
+function deleteEdges (_evt: IpcMainInvokeEvent, serviceName: string, edges: Edge[]): IObjectTemplate {
+    const json = objectTemplate(serviceName)
+    edges.forEach(edge => {
+        const findIndex = json.connections.findIndex(e => e.id == edge.id)
+        if (findIndex == -1) return
+        json.connections.splice(findIndex, 1)
+    })
+    fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
+    return { template: json, templateName: serviceName }
 }
 
 function templatePath(name: string) { return `./project/services/template-${name}.json` }
@@ -286,6 +293,7 @@ export const invokes = {
 
     'services:save-node': saveNode,
     'services:save-connection': saveConnection,
+    'services:delete-connection': deleteEdges,
     'services:delete-nodes': deleteNodes,
 
     'services:get-template': getTemplate,

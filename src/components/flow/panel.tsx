@@ -39,13 +39,3 @@ export function FlowPanel () {
 
     </Panel>
 }
-
-export function SaveConnections () {
-    const { showSaveConnections, saveConnection } = useContext(FlowContext)
-    return showSaveConnections && <Panel position="bottom-right" >
-        <button onClick={saveConnection} className="uppercase p-2 bg-teal-500 rounded-lg text-slate-300 font-semibold shadow-gray-800 shadow-md hover:bg-teal-600 active:bg-teal-700 animate-pulse">
-            <i className="bi bi-floppy mr-1"></i>
-            save
-        </button>
-    </Panel>
-}

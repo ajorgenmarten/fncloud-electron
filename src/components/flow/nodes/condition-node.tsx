@@ -1,6 +1,16 @@
-import { Handle, Position } from "reactflow";
+import { useEffect } from "react";
+import { Handle, NodeProps, Position } from "reactflow";
+import { useNode } from "./hook";
 
-export function ConditionNode () {
+export function ConditionNode (props: NodeProps) {
+
+    const { onSave } = useNode(props)
+
+    useEffect(() => {
+        console.log(props)
+        onSave()
+    }, [])
+
     return <div className="bg-slate-900 p-2 rounded-md text-slate-400 w-20 text-center">
 
         <span className="text-2xl font-bold m-2">if</span>
