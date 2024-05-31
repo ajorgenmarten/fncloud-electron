@@ -9,7 +9,7 @@ export function RequestNode (props: NodeProps<IRequestNodeData>) {
 
     const { path, indicator, method, errorMsg, onChangePath, onChangeMethod, onSave } = hook(props)
 
-    return <div className="w-60 bg-slate-900 p-2 rounded-md shadow-xl ">
+    return <div className={`w-60 bg-slate-900 p-2 rounded-md shadow-xl ${ props.selected && 'outline outline-1 outline-teal-400' }`}>
 
         <div className="flex items-center mb-4 border-b-[1px] border-gray-600 cursor-grab active:cursor-grabbing">
 

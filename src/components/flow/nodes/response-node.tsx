@@ -6,7 +6,7 @@ import { useState } from "react";
 export function ResponseNode (props: NodeProps<IResponseNodeData>) {
     const { success, indicator, changeStatus, onSave } = hook(props)
 
-    return <div className="flex w-40 flex-col bg-slate-900 p-2 rounded-md text-slate-400">
+    return <div className={`flex w-40 flex-col bg-slate-900 p-2 rounded-md text-slate-400 ${ props.selected && 'outline outline-1 outline-teal-400' }`}>
         <div className="flex items-center mb-2">
             { indicator && <i className="bi bi-circle-fill mr-2 text-[6px] ml-1 text-white"></i> }
 

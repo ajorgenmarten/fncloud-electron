@@ -1,4 +1,4 @@
-import { useContext, useState } from "react"
+import { useContext, useEffect, useState } from "react"
 import { AppContext } from "../../../app/context"
 import { NodeProps } from "reactflow"
 
@@ -6,6 +6,10 @@ export const useNode = (props: NodeProps, validateCallback?: Function) => {
     const { selectedService, updateTemplate } = useContext(AppContext)
     const [indicator, setIndicator] = useState<boolean>(props.data?.indicator ?? false)
     const [errorMsg, setErrorMsg] = useState<string|null>(null)
+
+    useEffect(() => {
+        setIndicator(props.data?.indicator)
+    }, [props.data?.indicator])
 
     const onSave = async () => {
         try {
@@ -16,7 +20,7 @@ export const useNode = (props: NodeProps, validateCallback?: Function) => {
             if ( validationResult ) {
                 setErrorMsg(null)
                 setIndicator(false)
-                if ( props.data.indicator ) props.data.indicator = false
+                if ( props.data?.indicator ) props.data.indicator = false
                 const template = await window.ipcRenderer.invoke('services:save-node', selectedService, props)
                 updateTemplate && updateTemplate({ templateName: selectedService as string, template })
             }
@@ -28,5 +32,3 @@ export const useNode = (props: NodeProps, validateCallback?: Function) => {
     return {indicator, errorMsg, setIndicator, onSave}
 }
 
-export const useHandlers = () => {
-}
