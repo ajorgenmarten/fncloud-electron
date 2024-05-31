@@ -34,7 +34,7 @@ export function FlowPanel () {
         </button>
 
         <button title="CODE" className="w-14 h-14 border hover:bg-gray-800 border-gray-500 rounded-lg hover:border-emerald-300 group" onClick={handleCreateCodeNode}>
-            <i className="bi bi-code text-3xl text-gray-300 group-hover:text-emerald-400"></i>
+            <i className="bi bi-code-slash text-3xl text-gray-300 group-hover:text-emerald-400"></i>
         </button>
 
     </Panel>
