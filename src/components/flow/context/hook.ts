@@ -81,21 +81,10 @@ export function useFlow() {
     const renderEdges = () => {
         setEdges([])
 
-        const parseEdgetoEdgeProps = (edge: EdgeProps): Edge => {
-            return {
-                id: edge.id,
-                source: edge.source,
-                target: edge.target,
-                sourceHandle: edge.sourceHandleId,
-                targetHandle: edge.targetHandleId
-            }
-        }
-
         const template = templates?.find(t => t.templateName == selectedService)
         if ( !template ) return
-
-        const edges = template.template.connections.map(n => parseEdgetoEdgeProps(n))
-        setEdges(edges)
+        
+        setEdges(template.template.connections)
         
     }
 
