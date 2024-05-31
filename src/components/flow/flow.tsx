@@ -2,6 +2,7 @@ import ReactFlow, { Background, MiniMap } from "reactflow";
 import { useContext, useEffect } from "react";
 import { FlowContext } from "./context/context";
 import './styles.css'
+import { FlowPanel } from "./panel";
 
 export function Flow() {
   const { nodes, edges, nodeTypes, edgeTypes, onEdgesDelete, onNodesChange, onEdgesChange, onConnect, onNodesDelete } = useContext( FlowContext )
@@ -24,6 +25,7 @@ export function Flow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}>
       <MiniMap className="bg-slate-700 border border-slate-800 shadow-md" position="bottom-left" maskColor="#0004" nodeColor='#0007' color="red"/>
+      <FlowPanel />
       <Background color="#888" className="bg-slate-800" />
     </ReactFlow>
   </div>
