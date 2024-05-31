@@ -8,5 +8,5 @@ Construida con `electron`, `react`, `monaco-editor`, `reactflow`  y `tailwindcss
 
 ## CAPTURAS
 
-<img src="./screenshot.png" alt="screenshot app" height="300px" />
-<img src="./screenshot2.png" alt="screenshot app" height="300px" />
+<img src="./screenshot.png" alt="screenshot app" width="700px" />
+<img src="./screenshot2.png" alt="screenshot app" width="700px" />

@@ -75,6 +75,26 @@ function deleteModel (_evt: IpcMainInvokeEvent, name: string) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function createService (_evt: IpcMainInvokeEvent, name: string) {
     fs.writeFileSync(`./project/services/template-${name}.json`, JSON.stringify({
         nodes: [],
