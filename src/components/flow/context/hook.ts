@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo } from "react";
-import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, EdgeProps, NodeDragHandler } from "reactflow";
+import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, NodeDragHandler } from "reactflow";
 import { RequestNode } from "../nodes/request-node";
 import { ResponseNode } from "../nodes/response-node";
 import { ConditionNode } from "../nodes/condition-node";
