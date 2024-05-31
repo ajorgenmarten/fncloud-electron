@@ -7,7 +7,7 @@ export function Editor() {
     const editorContainer = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        let editor = monaco.editor.create(editorContainer.current as HTMLDivElement, { theme: 'vs-dark', padding: { top: 20 }, fontFamily: 'cascadia code' })
+        let editor = monaco.editor.create(editorContainer.current as HTMLDivElement, { theme: 'vs-dark', padding: { top: 20 }, fontFamily: 'cascadia code', automaticLayout: true })
 
         editor.addAction({
             id: 'save-model-data',

@@ -33,3 +33,9 @@ export interface IRequestNodeData extends INodeData {
 export interface IResponseNodeData extends INodeData {
     success: "OK" | "BAD"
 }
+
+export interface ICodeNodeData extends INodeData {
+    name: string
+    value: string
+    path: string
+}

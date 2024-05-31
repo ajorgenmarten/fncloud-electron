@@ -161,7 +161,6 @@ function deleteService (_evt: IpcMainInvokeEvent, name: string) {
 
 
 function saveNode (_evt: IpcMainInvokeEvent, serviceName: string, props: NodeProps<INodeData> ) {
-    console.log('saving-node', props.id)
     const json = objectTemplate(serviceName)
     const findIndex = json.nodes.findIndex(node => node.id == props.id)
     if (findIndex == -1) {

@@ -64,7 +64,7 @@ export function useFlow() {
         const position = {x: 250, y: 250}
         const type = 'CodeNode'
         const id = 'condition-node-' + crypto.randomUUID()
-        const node: Node = { position, type, id, data: null, selected: true }
+        const node: Node = { position, type, id, data: { indicator: true, value: '', path: '' }, selected: true }
         setNodes( [...nodes, node] )
     }
 
@@ -102,7 +102,12 @@ export function useFlow() {
     const onConnect = useCallback((connection: Connection) => {
         console.log(connection)
         // comprobar si existe una conexion con ese source
-        const hasEdge = edges.find( edge => edge.source == connection.source)
+        const hasEdge = edges.find( edge => {
+            if (connection.sourceHandle) {
+                return connection.sourceHandle == edge.sourceHandle
+            } 
+            return connection.source == edge.source
+        } )
         if ( hasEdge ) return
 
         const target: Node = nodes.find(n => n.id == connection.target) as Node
@@ -113,7 +118,7 @@ export function useFlow() {
 
         if (target.type == "ConditionNode" && source.type != "CodeNode") return
         
-        const edge: Edge = { id: `${crypto.randomUUID()}`, source: connection.source as string, target: connection.target as string, type: "CustomEdge" }
+        const edge: Edge = { id: `${crypto.randomUUID()}`, source: connection.source as string, target: connection.target as string, type: "CustomEdge", sourceHandle: connection.sourceHandle, targetHandle: connection.targetHandle }
         window.ipcRenderer.invoke('services:save-connection', selectedService, edge)
         setEdges([...edges, edge])
 
