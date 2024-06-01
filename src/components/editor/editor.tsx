@@ -3,43 +3,39 @@ import { AppContext } from "../../app/context"
 import * as monaco from 'monaco-editor'
 
 export function Editor() {
-    const { models, selectedModel, saveData } = useContext(AppContext)
+    const { selectedModel, saveModel } = useContext(AppContext)
     const editorContainer = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        let editor = monaco.editor.create(editorContainer.current as HTMLDivElement, { theme: 'vs-dark', padding: { top: 20 }, fontFamily: 'cascadia code', automaticLayout: true })
-
+        console.log('mount editor')
+        const editor = monaco.editor.create(editorContainer.current as HTMLDivElement, { theme: 'vs-dark', padding: { top: 20 }, fontFamily: 'cascadia code', automaticLayout: true })
         editor.addAction({
             id: 'save-model-data',
             label: 'save',
             keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
             run(editor) {
                 const data = editor.getValue()
-                const name = selectedModel
-                saveData && saveData(name as string, data)
+                const name = selectedModel && selectedModel.name
+                saveModel && saveModel(name as string, data)
             },
         })
-    
-        models?.forEach(model => {
-            if (monaco.editor.getModel(monaco.Uri.parse(model.path)) == null) {
-                monaco.editor.createModel(model.data, 'typescript', monaco.Uri.parse(model.path))
-            }
-        })
-        
-        if (selectedModel != null) {
-            const uri = `file:///models/${selectedModel}.d.ts`
-            editor.setModel(monaco.editor.getModel(monaco.Uri.parse(uri)))
-        }
-
-        
-        editorContainer.current?.addEventListener('wheel', ev => {
-            console.log(ev)
-        }) 
-
+        editor.onDidChangeModel(() => console.log('change model'))
+        editor.onDidDispose(() => console.log('dismount editor'))
         return () => {
             editor.dispose()
         }
-    }, [models, selectedModel])
+    }, [])
+
+    useEffect(() => {
+        const editor = monaco.editor.getEditors()[0]
+        if (selectedModel != null) {
+            const editorModelPath = editor?.getModel()?.uri.path
+            const selectedModelPath = monaco.Uri.parse(selectedModel.path).path
+            if ( !editorModelPath || selectedModelPath != editorModelPath ) {
+                editor?.setModel(monaco.editor.getModel(monaco.Uri.parse(selectedModel.path)))
+            }
+        }
+    }, [selectedModel])
 
     return <div className="h-full w-full grow" ref={editorContainer} >
 

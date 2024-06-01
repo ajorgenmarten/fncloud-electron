@@ -1,46 +1,84 @@
 import { IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
-import { INodeData, ITemplateJson, ModelData, ServiceData } from '../../src/app/types'
+import { ITemplateJson, ModelData, ServiceData } from '../../src/app/types'
 import { Edge, EdgeProps, Node, NodeProps } from 'reactflow'
 import { IObjectTemplate } from './types'
 
-function getAllModels ():ModelData[] {
-    const models = fs.readdirSync('./project/models').map(model => model.split('.')[0])
-    return models.map(getModelData)
+
+function createModel (_evt: IpcMainInvokeEvent, model_name: string): ModelData|null {
+    const pathToSave = `./project/models/${model_name}.d.ts`
+    const modelExist = fs.existsSync(pathToSave)
+    if (modelExist) return null
+    else fs.writeFileSync(pathToSave, '')
+    return { data: '', path: `file:///models/${model_name}.d.ts`, name: model_name }
 }
 
-function getModelData (name: string):ModelData {
-    return {
-        data: fs.readFileSync('./project/models/' + name + '.d.ts').toString(),
-        name: name,
-        path: 'file:///models/' + name + '.d.ts'
-    }
+function saveModel (_evt: IpcMainInvokeEvent, model_name: string, model_data: string): ModelData {
+    const pathToSave = `./project/models/${model_name}.d.ts`
+    fs.writeFileSync(pathToSave, model_data)
+    return { data: model_data, name: model_name, path: `file:///models/${model_name}.d.ts` }
 }
 
-function createModel (_evt:IpcMainInvokeEvent ,name: string): ModelData|false {
-    if (!existModel(name)) {
-        fs.writeFileSync('./project/models/' + name + '.d.ts', '')
-        return { data: '', name, path: 'file:///models/' + name + '.d.ts' }
-    }
-    else return false
+function renameModel (_evt: IpcMainInvokeEvent, model_oldname: string, model_newname: string): ModelData & { oldpath: string } {
+    const oldpath = `./project/models/${model_oldname}.d.ts`
+    const newpath = `./project/models/${model_newname}.d.ts`
+    const data = fs.readFileSync(oldpath).toString()
+    fs.renameSync(oldpath, newpath)
+    return { data, name: model_newname, path: `file:///models/${model_newname}.d.ts`, oldpath: `file:///models/${model_oldname}.d.ts`  }
 }
 
-function updateModelData (_evt:IpcMainInvokeEvent, name: string, data: string) {
-    fs.writeFileSync('./project/models/' + name + '.d.ts', data)
+function deleteModel (_evt: IpcMainInvokeEvent, model_name: string) {
+    fs.unlinkSync(`./project/models/${model_name}.d.ts`)
+    return { path: `file:///models/${model_name}.d.ts` }
 }
 
-function existModel (name: string) {
-    return fs.existsSync('./project/models/' + name + '.d.ts')
+function getAllModels (): ModelData[] {
+    return (fs.readdirSync(`./project/models`) as `${string}.d.ts`[])
+    .map( model => {
+        const model_name = model.split('.')[0]
+        const model_path = `file:///models/${model}`
+        const model_data = fs.readFileSync(`./project/models/${model}`).toString()
+        return { data: model_data, path: model_path, name: model_name } as ModelData
+    } )
 }
 
-function renameModel (_evt: IpcMainInvokeEvent, name: string, newName: string) {
-    const path = './project/models/'
-    fs.renameSync(path + name + '.d.ts', path + newName + '.d.ts')
-}
+// function getAllModels ():ModelData[] {
+//     const models = fs.readdirSync('./project/models').map(model => model.split('.')[0])
+//     return models.map(getModelData)
+// }
 
-function deleteModel (_evt: IpcMainInvokeEvent, name: string) {
-    fs.unlinkSync('./project/models/' + name + '.d.ts')
-}
+// function getModelData (name: string):ModelData {
+//     return {
+//         data: fs.readFileSync('./project/models/' + name + '.d.ts').toString(),
+//         name: name,
+//         path: 'file:///models/' + name + '.d.ts'
+//     }
+// }
+
+// function createModel (_evt:IpcMainInvokeEvent ,name: string): ModelData|false {
+//     if (!existModel(name)) {
+//         fs.writeFileSync('./project/models/' + name + '.d.ts', '')
+//         return { data: '', name, path: 'file:///models/' + name + '.d.ts' }
+//     }
+//     else return false
+// }
+
+// function updateModelData (_evt:IpcMainInvokeEvent, name: string, data: string) {
+//     fs.writeFileSync('./project/models/' + name + '.d.ts', data)
+// }
+
+// function existModel (name: string) {
+//     return fs.existsSync('./project/models/' + name + '.d.ts')
+// }
+
+// function renameModel (_evt: IpcMainInvokeEvent, name: string, newName: string) {
+//     const path = './project/models/'
+//     fs.renameSync(path + name + '.d.ts', path + newName + '.d.ts')
+// }
+
+// function deleteModel (_evt: IpcMainInvokeEvent, name: string) {
+//     fs.unlinkSync('./project/models/' + name + '.d.ts')
+// }
 
 
 
@@ -100,6 +138,7 @@ function createService (_evt: IpcMainInvokeEvent, name: string) {
         nodes: [],
         connections: [],
     }))
+    fs.mkdirSync(`/project/codes/${name}`)
     return true
 }
 
@@ -180,9 +219,15 @@ function deleteService (_evt: IpcMainInvokeEvent, name: string) {
 
 
 
-function saveNode (_evt: IpcMainInvokeEvent, serviceName: string, props: NodeProps<INodeData> ) {
+function saveNode (_evt: IpcMainInvokeEvent, serviceName: string, props: NodeProps ) {
     const json = objectTemplate(serviceName)
     const findIndex = json.nodes.findIndex(node => node.id == props.id)
+    if (props.type == "CodeNode") {
+        const path = `/codes/${serviceName}/${props.data.name}.ts`
+        fs.writeFileSync(`./project/${path}`, props.data.value ?? '')
+        props.data.value = undefined
+        props.data.path = path
+    }
     if (findIndex == -1) {
         json.nodes.push(props)
     } else {
@@ -240,6 +285,10 @@ function deleteEdges (_evt: IpcMainInvokeEvent, serviceName: string, edges: Edge
     return { template: json, templateName: serviceName }
 }
 
+function getCodeNodeValue (_evt: IpcMainInvokeEvent, serviceName: string, codeName: string) {
+    return fs.readFileSync(`./project/codes/${serviceName}/${codeName}.ts`).toString()
+}
+
 function templatePath(name: string) { return `./project/services/template-${name}.json` }
 
 function objectTemplate(name: string) {
@@ -293,6 +342,7 @@ export function init () {
     fs.existsSync('./project') == false && fs.mkdirSync('./project')
     fs.existsSync('./project/models') == false && fs.mkdirSync('./project/models')
     fs.existsSync('./project/services') == false && fs.mkdirSync('./project/services')
+    fs.existsSync('./project/codes') == false && fs.mkdirSync('./project/services/codes')
 }
 
 export const sends = {
@@ -300,9 +350,8 @@ export const sends = {
 
 export const invokes = {
     'models:create': createModel,
-    'models:get-all': getAllModels,
-    'models:get-data': getModelData,
-    'models:update-data': updateModelData,
+    'models:save': saveModel,
+    'models:all': getAllModels,
     'models:rename': renameModel,
     'models:delete': deleteModel,
 
@@ -315,6 +364,7 @@ export const invokes = {
     'services:save-connection': saveConnection,
     'services:delete-connection': deleteEdges,
     'services:delete-nodes': deleteNodes,
+    'services:get-code-node-value': getCodeNodeValue,
 
     'services:get-template': getTemplate,
     'services:get-all-templates': getAllObjectTemplates,

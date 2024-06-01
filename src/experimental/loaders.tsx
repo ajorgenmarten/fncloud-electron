@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react"
-import { ModelData, ServiceData } from "./types"
-import { IObjectTemplate } from "../../electron/src/types"
 import * as monaco from 'monaco-editor'
+import { ModelData } from "../app/types"
 
-export const useModel = () => {
+export const Loader = () => {
     const [models, setModels] = useState<ModelData[]>([])
     const [selectedModel, setSelectedModel] = useState<ModelData|null>(null)
 
@@ -17,9 +16,7 @@ export const useModel = () => {
 
         console.log('Set models')
         loadedmodels.forEach(model => {
-            const uri = monaco.Uri.parse(model.path)
-            if (!monaco.editor.getModel(uri))
-                monaco.editor.createModel(model.data, 'typescript', uri)
+            monaco.editor.createModel(model.data, 'typescript', monaco.Uri.parse(model.path))
         })
 
         console.log('Finished')
@@ -71,8 +68,7 @@ export const useModel = () => {
         monaco.editor.createModel(model.data, 'typescript', monaco.Uri.parse(model.path))
 
         const index = models.findIndex(model => model.name == old_name)
-        models[index].name = model.name
-        models[index].path = model.path
+        models[index].name = new_name
 
         console.log('Finished')
         setModels([...models])
@@ -109,103 +105,11 @@ export const useModel = () => {
         loadmodels()
     }, [])
 
+    useEffect(() => {
+        if (selectedModel != null) {
+            setSelectedModel(null)
+        }
+    }, [models])
+
     return { models, selectedModel, selectModel, createModel, saveModel, renameModel, deleteModel }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export const useServices = () => {
-    const [services, setServices] = useState<ServiceData[]>([])
-    const [selectedService, setSelectedService] = useState<string|null>(null)
-    const [templates, setTemplates] = useState<IObjectTemplate[]>([])
-
-    const getServiceIndex = (name: string) => {
-        return services.findIndex(s => s.name == name)
-    }
-    const getTemplateIndex = (name: string) => {
-        return templates.findIndex(t => t.templateName == name)
-    } 
-
-    const createService = async (name: string) => {
-        await window.ipcRenderer.invoke('services:create', name)
-        loadServiceTemplate(name)
-        setServices([...services, { name }])
-    }
-
-    const renameService = async (name: string, newName: string) => {
-        await window.ipcRenderer.invoke('services:rename', name, newName)
-        const serviceIndex = getServiceIndex(name)
-        const templateIndex = getTemplateIndex(name)
-        templates[templateIndex].templateName = newName
-        services[serviceIndex].name = newName
-        setServices([...services])
-        setTemplates([...templates])
-    }
-
-    const deleteService = async (name: string) => {
-        await window.ipcRenderer.invoke('services:delete', name)
-        const serviceIndex = getServiceIndex(name)
-        const templateIndex = getTemplateIndex(name)
-        services.splice(serviceIndex, 1)
-        templates.splice(templateIndex, 1)
-        setServices([...services])
-        setTemplates([...templates])
-        setSelectedService(null)
-    }
-
-    const selectService = async (name: string|null) => {
-        setSelectedService(name)
-    }
-
-    const getAllServices = async () => {
-        const services = await window.ipcRenderer.invoke('services:get-all')
-        setServices( services )
-    }
-
-    const loadAllServiceTemplates = async () => {
-        const templates = await window.ipcRenderer.invoke('services:get-all-templates')
-        setTemplates(templates)
-    }
-
-    const loadServiceTemplate = async (name: string) => {
-        const template = await window.ipcRenderer.invoke('services:get-template', name)
-        setTemplates([...templates, template])
-    }
-
-    const updateTemplate = (template: IObjectTemplate) => {
-        const findIndex = templates.findIndex(t => t.templateName == template.templateName)
-        templates[findIndex] = template
-        setTemplates([...templates])
-    }
-
-    const getTemplate = (templateName: string) => {
-        return templates.find(template => template.templateName == templateName)
-    }
-
-    useEffect(() => {
-        console.log(templates)
-    }, [templates])
-
-    useEffect(() => {
-        getAllServices()
-        loadAllServiceTemplates()
-    }, [])
-
-    return { services, selectedService, templates, createService, renameService, deleteService, selectService, updateTemplate, getTemplate }
 }

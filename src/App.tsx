@@ -15,7 +15,7 @@ function App() {
   useEffect(() => {
     window.MonacoEnvironment = {
       getWorker() { return new TSWorker() },
-  }
+    }
   }, [])
 
   return <div className="flex h-screen bg-slate-800">

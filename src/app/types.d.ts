@@ -17,7 +17,7 @@ export interface ServiceData {
 
 
 export interface ITemplateJson {
-    nodes: NodeProps<INodeData>[]
+    nodes: NodeProps[]
     connections: EdgeProps[]
 }
 // TIPO DE DATOS DE NODOS

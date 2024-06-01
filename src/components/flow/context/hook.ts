@@ -9,7 +9,7 @@ import { IRequestNodeData, IResponseNodeData } from "../../../app/types";
 import { CustomEdge } from "../edges/custom-edge";
 
 export function useFlow() {
-    const { selectedService, templates, updateTemplate } = useContext(AppContext)
+    const { selectedService, templates, updateTemplate, getTemplate } = useContext(AppContext)
     
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -63,18 +63,29 @@ export function useFlow() {
     const createCodeNode = () => {
         const position = {x: 250, y: 250}
         const type = 'CodeNode'
-        const id = 'condition-node-' + crypto.randomUUID()
+        const id = 'code-node-' + crypto.randomUUID()
         const node: Node = { position, type, id, data: { indicator: true, value: '', path: '' }, selected: true }
         setNodes( [...nodes, node] )
     }
 
-    const renderNodes = () => {
+    const getValue = async (name: string) => {
+        const value = await window.ipcRenderer.invoke('services:get-code-node-value', selectedService, name)
+        return value as string
+    }
+
+    const renderNodes = async () => {
         setNodes([])
 
         const template = templates?.find(t => t.templateName == selectedService)
         if ( !template ) return
 
-        const nodes = template.template.nodes.map(n => parseNodePropsToNode(n))
+        const nodes = await Promise.all(template.template.nodes.map(async n => {
+            if (n.type == "CodeNode") {
+                n.data.value = await getValue(n.data.name)
+                console.log(n.data)
+            }
+            return parseNodePropsToNode(n)
+        }))
         setNodes([...nodes])
     }
 
@@ -89,8 +100,7 @@ export function useFlow() {
     }
 
     const onConnect = useCallback((connection: Connection) => {
-        console.log(connection)
-        // comprobar si existe una conexion con ese source
+        
         const hasEdge = edges.find( edge => {
             if (connection.sourceHandle) {
                 return connection.sourceHandle == edge.sourceHandle
@@ -98,6 +108,7 @@ export function useFlow() {
             return connection.source == edge.source
         } )
         if ( hasEdge ) return
+        if (connection.target == connection.source) return
 
         const target: Node = nodes.find(n => n.id == connection.target) as Node
         const source: Node = nodes.find(n => n.id == connection.source) as Node
@@ -126,12 +137,11 @@ export function useFlow() {
     const onNodeDragStop: NodeDragHandler = async (_evt, node) => {
         const findIndex = nodes.findIndex(n => n.id == node.id)
         const searchNode = nodes[findIndex]
-        searchNode.data?.indicator !== undefined && (searchNode.data.indicator = true)
-        if(searchNode.type == "ConditionNode") {
-            searchNode.position = node.position
-            const template = await window.ipcRenderer.invoke('services:save-node', selectedService, parseNodeToNodeProps(searchNode))
-            updateTemplate && updateTemplate({ templateName: selectedService as string, template: template })
-        } else setNodes([...nodes])
+        searchNode.position = node.position
+        const template = getTemplate && getTemplate(selectedService as string)
+        if ( template?.template.nodes.findIndex(n => n.id == node.id) == -1 ) return
+        const newTemplate = await window.ipcRenderer.invoke('services:save-node', selectedService, parseNodeToNodeProps(searchNode))
+        updateTemplate && updateTemplate({ templateName: selectedService as string, template: newTemplate })
     }
     
     useEffect(() => {
