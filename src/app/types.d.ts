@@ -12,7 +12,9 @@ export interface ModelData {
 }
 
 export interface ServiceData {
-    name: string,
+    name: string
+    nodes: NodeProps[]
+    edges: EdgeProps[]
 }
 
 

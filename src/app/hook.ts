@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import { ModelData, ServiceData } from "./types"
-import { IObjectTemplate } from "../../electron/src/types"
 import * as monaco from 'monaco-editor'
 
 export const useModel = () => {
@@ -21,8 +20,6 @@ export const useModel = () => {
             if (!monaco.editor.getModel(uri))
                 monaco.editor.createModel(model.data, 'typescript', uri)
         })
-
-        console.log('Finished')
     }
 
 
@@ -36,7 +33,6 @@ export const useModel = () => {
         const modeldata = await window.ipcRenderer.invoke('models:create', model_name) as ModelData
         monaco.editor.createModel(modeldata.data, 'typescript', monaco.Uri.parse(modeldata.path))
 
-        console.log('Finished')
         setModels([...models, modeldata])
     }
 
@@ -54,7 +50,6 @@ export const useModel = () => {
         const index = models.findIndex(model => model.name == model_name)
         models[index].data = model.data
 
-        console.log('Finished')
         setModels([...models])
     }
 
@@ -74,7 +69,6 @@ export const useModel = () => {
         models[index].name = model.name
         models[index].path = model.path
 
-        console.log('Finished')
         setModels([...models])
         setSelectedModel(model)
     }
@@ -92,17 +86,21 @@ export const useModel = () => {
         const index = models.findIndex(model => model.name == model_name)
         models.splice(index, 1)
 
-        console.log('Finished')
         setModels([...models])
+        setSelectedModel(null)
     }
 
     /**
      * Selecciona un modelo
      * @param name Nombre del modelo a seleccionar
      */
-    const selectModel = (name: string) => {
-        const model = models.find(model => model.name == name) as ModelData
-        setSelectedModel(model)
+    const selectModel = (name: string|null) => {
+        if (name == null) {
+            setSelectedModel(null)
+        } else {
+            const model = models.find(model => model.name == name) as ModelData
+            setSelectedModel(model)
+        }
     }
 
     useEffect(() => {
@@ -130,82 +128,117 @@ export const useModel = () => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 export const useServices = () => {
     const [services, setServices] = useState<ServiceData[]>([])
-    const [selectedService, setSelectedService] = useState<string|null>(null)
-    const [templates, setTemplates] = useState<IObjectTemplate[]>([])
+    const [selectedService, setSelectedService] = useState<ServiceData|null>(null)
 
-    const getServiceIndex = (name: string) => {
-        return services.findIndex(s => s.name == name)
-    }
-    const getTemplateIndex = (name: string) => {
-        return templates.findIndex(t => t.templateName == name)
-    } 
-
-    const createService = async (name: string) => {
-        await window.ipcRenderer.invoke('services:create', name)
-        loadServiceTemplate(name)
-        setServices([...services, { name }])
+    const loadservices = async () => {
+        console.log('Load services')
+        const loadedservices = await window.ipcRenderer.invoke('services:all') as ServiceData[]
+        setServices(loadedservices)
     }
 
-    const renameService = async (name: string, newName: string) => {
-        await window.ipcRenderer.invoke('services:rename', name, newName)
-        const serviceIndex = getServiceIndex(name)
-        const templateIndex = getTemplateIndex(name)
-        templates[templateIndex].templateName = newName
-        services[serviceIndex].name = newName
+    const createService = async (service_name: string) => {
+        console.log('Create service')
+        const service = await window.ipcRenderer.invoke('services:create', service_name) as ServiceData
+        setServices([...services, service])
+    }
+
+    const renameService = async (old_name: string, new_name: string) => {
+        console.log('Rename service')
+        const index = services.findIndex(service => service.name == old_name)
+        const service = await window.ipcRenderer.invoke('services:rename', old_name, new_name) as ServiceData
+        services[index].name = service.name
         setServices([...services])
-        setTemplates([...templates])
+        setSelectedService(service)
     }
 
-    const deleteService = async (name: string) => {
-        await window.ipcRenderer.invoke('services:delete', name)
-        const serviceIndex = getServiceIndex(name)
-        const templateIndex = getTemplateIndex(name)
-        services.splice(serviceIndex, 1)
-        templates.splice(templateIndex, 1)
+    const deleteService = async (service_name: string) => {
+        console.log('Delete service')
+        await window.ipcRenderer.invoke('services:delete', service_name) as Omit<ServiceData, "nodes" | "edges">
+        const index = services.findIndex(service => service.name == service_name)
+        services.splice(index, 1)
         setServices([...services])
-        setTemplates([...templates])
-        setSelectedService(null)
     }
 
-    const selectService = async (name: string|null) => {
-        setSelectedService(name)
-    }
-
-    const getAllServices = async () => {
-        const services = await window.ipcRenderer.invoke('services:get-all')
-        setServices( services )
-    }
-
-    const loadAllServiceTemplates = async () => {
-        const templates = await window.ipcRenderer.invoke('services:get-all-templates')
-        setTemplates(templates)
-    }
-
-    const loadServiceTemplate = async (name: string) => {
-        const template = await window.ipcRenderer.invoke('services:get-template', name)
-        setTemplates([...templates, template])
-    }
-
-    const updateTemplate = (template: IObjectTemplate) => {
-        const findIndex = templates.findIndex(t => t.templateName == template.templateName)
-        templates[findIndex] = template
-        setTemplates([...templates])
-    }
-
-    const getTemplate = (templateName: string) => {
-        return templates.find(template => template.templateName == templateName)
+    const selectService = (service_name: string|null) => {
+        if (service_name == null) {
+            setSelectedService(null)
+        } else {
+            const service = services.find(service => service.name == service_name) as ServiceData
+            setSelectedService(service)
+        }
     }
 
     useEffect(() => {
-        console.log(templates)
-    }, [templates])
-
-    useEffect(() => {
-        getAllServices()
-        loadAllServiceTemplates()
+        loadservices()
     }, [])
 
-    return { services, selectedService, templates, createService, renameService, deleteService, selectService, updateTemplate, getTemplate }
+
+    return { services, selectedService, createService, renameService, deleteService, selectService }
 }

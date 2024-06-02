@@ -4,9 +4,12 @@ import { ITemplateJson, ModelData, ServiceData } from '../../src/app/types'
 import { Edge, EdgeProps, Node, NodeProps } from 'reactflow'
 import { IObjectTemplate } from './types'
 
+const modelsPath = './project/models/'
+const servicesPath = './project/services/'
+const codesPath = './project/codes/'
 
 function createModel (_evt: IpcMainInvokeEvent, model_name: string): ModelData|null {
-    const pathToSave = `./project/models/${model_name}.d.ts`
+    const pathToSave = `${modelsPath}${model_name}.d.ts`
     const modelExist = fs.existsSync(pathToSave)
     if (modelExist) return null
     else fs.writeFileSync(pathToSave, '')
@@ -14,71 +17,34 @@ function createModel (_evt: IpcMainInvokeEvent, model_name: string): ModelData|n
 }
 
 function saveModel (_evt: IpcMainInvokeEvent, model_name: string, model_data: string): ModelData {
-    const pathToSave = `./project/models/${model_name}.d.ts`
+    const pathToSave = `${modelsPath}${model_name}.d.ts`
     fs.writeFileSync(pathToSave, model_data)
     return { data: model_data, name: model_name, path: `file:///models/${model_name}.d.ts` }
 }
 
 function renameModel (_evt: IpcMainInvokeEvent, model_oldname: string, model_newname: string): ModelData & { oldpath: string } {
-    const oldpath = `./project/models/${model_oldname}.d.ts`
-    const newpath = `./project/models/${model_newname}.d.ts`
+    const oldpath = `${modelsPath}${model_oldname}.d.ts`
+    const newpath = `${modelsPath}${model_newname}.d.ts`
     const data = fs.readFileSync(oldpath).toString()
     fs.renameSync(oldpath, newpath)
     return { data, name: model_newname, path: `file:///models/${model_newname}.d.ts`, oldpath: `file:///models/${model_oldname}.d.ts`  }
 }
 
 function deleteModel (_evt: IpcMainInvokeEvent, model_name: string) {
-    fs.unlinkSync(`./project/models/${model_name}.d.ts`)
+    fs.unlinkSync(`${modelsPath}${model_name}.d.ts`)
     return { path: `file:///models/${model_name}.d.ts` }
 }
 
 function getAllModels (): ModelData[] {
-    return (fs.readdirSync(`./project/models`) as `${string}.d.ts`[])
+    return (fs.readdirSync(`${modelsPath}`) as `${string}.d.ts`[])
     .map( model => {
         const model_name = model.split('.')[0]
         const model_path = `file:///models/${model}`
-        const model_data = fs.readFileSync(`./project/models/${model}`).toString()
+        const model_data = fs.readFileSync(`${modelsPath}${model}`).toString()
         return { data: model_data, path: model_path, name: model_name } as ModelData
     } )
 }
 
-// function getAllModels ():ModelData[] {
-//     const models = fs.readdirSync('./project/models').map(model => model.split('.')[0])
-//     return models.map(getModelData)
-// }
-
-// function getModelData (name: string):ModelData {
-//     return {
-//         data: fs.readFileSync('./project/models/' + name + '.d.ts').toString(),
-//         name: name,
-//         path: 'file:///models/' + name + '.d.ts'
-//     }
-// }
-
-// function createModel (_evt:IpcMainInvokeEvent ,name: string): ModelData|false {
-//     if (!existModel(name)) {
-//         fs.writeFileSync('./project/models/' + name + '.d.ts', '')
-//         return { data: '', name, path: 'file:///models/' + name + '.d.ts' }
-//     }
-//     else return false
-// }
-
-// function updateModelData (_evt:IpcMainInvokeEvent, name: string, data: string) {
-//     fs.writeFileSync('./project/models/' + name + '.d.ts', data)
-// }
-
-// function existModel (name: string) {
-//     return fs.existsSync('./project/models/' + name + '.d.ts')
-// }
-
-// function renameModel (_evt: IpcMainInvokeEvent, name: string, newName: string) {
-//     const path = './project/models/'
-//     fs.renameSync(path + name + '.d.ts', path + newName + '.d.ts')
-// }
-
-// function deleteModel (_evt: IpcMainInvokeEvent, name: string) {
-//     fs.unlinkSync('./project/models/' + name + '.d.ts')
-// }
 
 
 
@@ -133,34 +99,41 @@ function getAllModels (): ModelData[] {
 
 
 
-function createService (_evt: IpcMainInvokeEvent, name: string) {
-    fs.writeFileSync(`./project/services/template-${name}.json`, JSON.stringify({
+
+
+function createService (_evt: IpcMainInvokeEvent, name: string): ServiceData {
+    fs.writeFileSync(`${servicesPath}template-${name}.json`, JSON.stringify({
         nodes: [],
-        connections: [],
+        edges: [],
     }))
-    fs.mkdirSync(`/project/codes/${name}`)
-    return true
+    fs.mkdirSync(codesPath + name)
+    return { name, nodes: [], edges: [] }
 }
 
 function getAllServices (): ServiceData[] {
-    return fs.readdirSync('./project/services/')
-            .map(service => {
-                const name = service
-                .substring('template-'.length)
-                .split('.')[0]
-                return { name }
-            })
+    const services = fs.readdirSync(servicesPath)
+    return services.map(service => {
+        const name = service.match(/^template-(\w+).json$/)?.[1] as string
+        const serviceObject = JSON.parse ( fs.readFileSync(servicesPath + service).toString() ) as ServiceData
+        return { ...serviceObject, name }
+    })
 }
 
-function renameService (_evt: IpcMainInvokeEvent, name: string, newName: string) {
-    fs.renameSync(`./project/services/template-${name}.json`, `./project/services/template-${newName}.json`)
+function renameService (_evt: IpcMainInvokeEvent, old_name: string, new_name: string): ServiceData {
+    const serviceOldName = `template-${old_name}.json`
+    const serviceNewName = `template-${new_name}.json`
+    fs.renameSync(servicesPath + serviceOldName, servicesPath + serviceNewName)
+    fs.renameSync(codesPath + old_name, codesPath + new_name)
+    const serviceObject = JSON.parse( fs.readFileSync(servicesPath + serviceNewName).toString() ) as ServiceData
+    return { ...serviceObject, name: new_name }
 }
 
-function deleteService (_evt: IpcMainInvokeEvent, name: string) {
-    fs.unlinkSync(`./project/services/template-${name}.json`)
+function deleteService (_evt: IpcMainInvokeEvent, name: string): Omit<ServiceData, 'nodes' | 'edges' > {
+    const serviceName = `template-${name}.json`
+    fs.unlinkSync(servicesPath + serviceName)
+    fs.rmSync(codesPath + name, { recursive: true })
+    return { name }
 }
-
-
 
 
 
@@ -356,7 +329,7 @@ export const invokes = {
     'models:delete': deleteModel,
 
     'services:create': createService,
-    'services:get-all': getAllServices,
+    'services:all': getAllServices,
     'services:rename': renameService,
     'services:delete': deleteService,
 
