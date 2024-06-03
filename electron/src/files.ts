@@ -192,6 +192,104 @@ function deleteService (_evt: IpcMainInvokeEvent, name: string): Omit<ServiceDat
 
 
 
+
+function saveRequestNode (_evt: IpcMainInvokeEvent, service: string, props: NodeProps) {
+    const serviceName = `template-${service}.json`
+    const toSave = { id: props.id, data: props.data, type: props.type, xPos: props.xPos, yPos: props.yPos }
+    const serviceObject = JSON.parse( fs.readFileSync( servicesPath + serviceName ).toString() ) as ServiceData
+    const findIndex = serviceObject.nodes.findIndex(node => node.id == toSave.id)
+    if (findIndex == -1) {
+        serviceObject.nodes.push(toSave as NodeProps)
+    } else {
+        serviceObject.nodes[findIndex] = toSave as NodeProps
+    }
+    fs.writeFileSync(servicesPath + serviceName, JSON.stringify(serviceObject))
+    return serviceObject
+}
+
+function saveResponseNode (_evt: IpcMainInvokeEvent, service: string, props: NodeProps) {
+    const serviceName = `template-${service}.json`
+    const toSave = { id: props.id, data: props.data, type: props.type, xPos: props.xPos, yPos: props.yPos }
+    const serviceObject = JSON.parse( fs.readFileSync( servicesPath + serviceName ).toString() ) as ServiceData
+    const findIndex = serviceObject.nodes.findIndex(node => node.id == toSave.id)
+    if (findIndex == -1) {
+        serviceObject.nodes.push(toSave as NodeProps)
+    } else {
+        serviceObject.nodes[findIndex] = toSave as NodeProps
+    }
+    fs.writeFileSync(servicesPath + serviceName, JSON.stringify( serviceObject ))
+    return serviceObject
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function saveNode (_evt: IpcMainInvokeEvent, serviceName: string, props: NodeProps ) {
     const json = objectTemplate(serviceName)
     const findIndex = json.nodes.findIndex(node => node.id == props.id)
@@ -313,9 +411,9 @@ function objectTemplate(name: string) {
 
 export function init () {
     fs.existsSync('./project') == false && fs.mkdirSync('./project')
-    fs.existsSync('./project/models') == false && fs.mkdirSync('./project/models')
-    fs.existsSync('./project/services') == false && fs.mkdirSync('./project/services')
-    fs.existsSync('./project/codes') == false && fs.mkdirSync('./project/services/codes')
+    fs.existsSync(modelsPath) == false && fs.mkdirSync('./project/models')
+    fs.existsSync(servicesPath) == false && fs.mkdirSync(servicesPath)
+    fs.existsSync(codesPath) == false && fs.mkdirSync(codesPath)
 }
 
 export const sends = {
@@ -333,9 +431,12 @@ export const invokes = {
     'services:rename': renameService,
     'services:delete': deleteService,
 
+    'nodes:save-request': saveRequestNode,
+    'nodes:save-response': saveResponseNode,
+
     'services:save-node': saveNode,
-    'services:save-connection': saveConnection,
-    'services:delete-connection': deleteEdges,
+    'services:save-edge': saveConnection,
+    'services:delete-edges': deleteEdges,
     'services:delete-nodes': deleteNodes,
     'services:get-code-node-value': getCodeNodeValue,
 

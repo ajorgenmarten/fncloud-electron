@@ -1,22 +1,76 @@
 import { useCallback, useContext, useEffect, useMemo } from "react";
-import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, NodeDragHandler } from "reactflow";
+import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, NodeDragHandler, XYPosition } from "reactflow";
 import { RequestNode } from "../nodes/request-node";
 import { ResponseNode } from "../nodes/response-node";
 import { ConditionNode } from "../nodes/condition-node";
 import { CodeNode } from "../nodes/code-node";
 import { AppContext } from "../../../app/context";
-import { IRequestNodeData, IResponseNodeData } from "../../../app/types";
+import { ICodeNodeData, IRequestNodeData, IResponseNodeData } from "../../../app/types";
 import { CustomEdge } from "../edges/custom-edge";
 
 export function useFlow() {
-    const { selectedService, templates, updateTemplate, getTemplate } = useContext(AppContext)
+    const { selectedService } = useContext(AppContext)
     
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
     const nodeTypes = useMemo(() => ({RequestNode, ResponseNode, ConditionNode, CodeNode}), [])
     const edgeTypes = useMemo(() => ({CustomEdge}), [])
-    const parseNodePropsToNode = useCallback((props: NodeProps) => {
+
+    type NodeTypes = keyof typeof nodeTypes
+
+    const createRequestNode = () => {
+        const position: XYPosition = { x: 100, y: 100 }
+        const data: IRequestNodeData = { indicator: true, method: 'GET', path: '' }
+        const type: NodeTypes = "RequestNode"
+        const id = 'request-node-' + crypto.randomUUID()
+        const node: Node<IRequestNodeData> = { id, type, data, position, selected: true }
+        setNodes([...nodes.map(n => { n.selected = false; return n }), node])
+    }
+
+    const createResponseNode = () => {
+        const position: XYPosition = { x: 350, y: 100 }
+        const data: IResponseNodeData = { indicator: true, success: "OK" }
+        const type: NodeTypes = "ResponseNode"
+        const id = 'response-node-' + crypto.randomUUID()
+        const node: Node<IResponseNodeData> = { id, type, data, position, selected: true }
+        setNodes([...nodes.map(n => { n.selected = false; return n }), node])
+    }
+
+    const createConditionNode = () => {
+        const position: XYPosition = { x: 520, y: 100 }
+        const type: NodeTypes = "ConditionNode"
+        const id = 'condition-node-' + crypto.randomUUID()
+        const node: Node = { id, type, position, selected: true, data: { indicator: false } }
+        setNodes([...nodes.map(n => { n.selected = false; return n }), node])
+    }
+
+    const createCodeNode = () => {
+        const position: XYPosition = { x: 610, y: 100 }
+        const type: NodeTypes = "CodeNode"
+        const id = 'code-node-' + crypto.randomUUID()
+        const data: ICodeNodeData = { indicator: true, name: '', value: '', path: '' }
+        const node: Node<ICodeNodeData> = { id, type, position, selected: true, data }
+        setNodes([...nodes.map(n => { n.selected = false; return n }), node])
+    }
+
+    const render = () => {
+        setNodes(selectedService?.nodes.map(n => ({ id: n.id, data: n.data, position: { x: n.xPos, y: n.yPos }, type: n.type })) || [])
+        setEdges(selectedService?.edges || [])
+    }
+
+    useEffect(() => {
+        if ( selectedService != null ) {
+            console.log('Change flow for `' + selectedService?.name + '`')
+            render()
+        }
+    }, [selectedService])
+
+    return {nodes, edges, nodeTypes, edgeTypes, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode}    
+}
+
+/**
+ * const parseNodePropsToNode = useCallback((props: NodeProps) => {
         return {
             id: props.id,
             data: props.data,
@@ -33,40 +87,6 @@ export function useFlow() {
             type: props.type,
         } as NodeProps
     },[])
-
-    const createRequestNode = () => {
-        const position = {x:50, y:50}
-        const type = 'RequestNode'
-        const id = 'request-node-' + crypto.randomUUID()
-        const node: Node<IRequestNodeData> = { position, type, id, data: { path: '', method: 'GET', indicator: true }, selected: true }
-        setNodes( [...nodes, node] )
-    }
-
-    const createResponseNode = () => {
-        const position = {x:250, y:50}
-        const type= 'ResponseNode'
-        const id = 'response-node-' + crypto.randomUUID()
-        const node: Node<IResponseNodeData> = { position, type, id, data: { success: 'OK', indicator: true }, selected: true }
-        setNodes( [...nodes, node] )
-    }
-
-    const createConditionNode = async () => {
-        const position = {x: 250, y: 250}
-        const type = 'ConditionNode'
-        const id = 'condition-node-' + crypto.randomUUID()
-        const node: Node = { position, type, id, data: null, selected: true }
-        const template = await window.ipcRenderer.invoke('services:save-node', selectedService, parseNodeToNodeProps(node))
-        updateTemplate && updateTemplate({ templateName: selectedService as string, template })
-        setNodes([...nodes, node])
-    }
-
-    const createCodeNode = () => {
-        const position = {x: 250, y: 250}
-        const type = 'CodeNode'
-        const id = 'code-node-' + crypto.randomUUID()
-        const node: Node = { position, type, id, data: { indicator: true, value: '', path: '' }, selected: true }
-        setNodes( [...nodes, node] )
-    }
 
     const getValue = async (name: string) => {
         const value = await window.ipcRenderer.invoke('services:get-code-node-value', selectedService, name)
@@ -150,4 +170,4 @@ export function useFlow() {
     }, [selectedService])
 
     return { nodes, edges, nodeTypes, edgeTypes, onNodeDragStop, onEdgesDelete, onConnect, onNodesDelete, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode }
-}
+ */

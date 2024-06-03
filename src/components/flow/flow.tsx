@@ -8,8 +8,11 @@ export function Flow() {
   const { nodes, edges, nodeTypes, edgeTypes, onNodeDragStop, onEdgesDelete, onNodesChange, onEdgesChange, onConnect, onNodesDelete } = useContext( FlowContext )
 
   useEffect(() => {
-    console.log(edges)
-  }, [edges])
+    console.log('Mount flow')
+    return () => {
+      console.log('Dismount flow')
+    }
+  }, [])
   
   return <div className="w-full h-full grow">
     <ReactFlow 
@@ -24,6 +27,7 @@ export function Flow() {
       onEdgesDelete={onEdgesDelete}
       onNodesDelete={onNodesDelete}
       onNodesChange={onNodesChange}
+      onDrop={(e) => {console.log(e)}}
       onEdgesChange={onEdgesChange}>
       <MiniMap className="bg-slate-700 border border-slate-800 shadow-md" position="bottom-left" maskColor="#0004" nodeColor='#0007' color="red"/>
       <FlowPanel />

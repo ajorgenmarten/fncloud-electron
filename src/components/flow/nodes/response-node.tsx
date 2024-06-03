@@ -1,10 +1,10 @@
 import { Handle, NodeProps, Position } from "reactflow";
-import { useNode } from "./hook";
 import { IResponseNodeData } from "../../../app/types";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { AppContext } from "../../../app/context";
 
 export function ResponseNode (props: NodeProps<IResponseNodeData>) {
-    const { success, indicator, changeStatus, onSave } = hook(props)
+    const { success, indicator, changeStatus, save } = hook(props)
 
     return <div className={`flex w-40 flex-col bg-slate-900 p-2 rounded-md text-slate-400 ${ props.selected && 'outline outline-1 outline-teal-400' }`}>
         <div className="flex items-center mb-2">
@@ -25,7 +25,7 @@ export function ResponseNode (props: NodeProps<IResponseNodeData>) {
                 ${indicator && 'hover:bg-teal-500 active:bg-teal-600'}  
                 ${!indicator && 'bg-teal-950 text-slate-600 dragable'}`} 
                 disabled={!indicator}
-                onClick={onSave}
+                onClick={save}
             >
                 <span className="uppercase font-semibold">save</span>
             </button>
@@ -34,14 +34,20 @@ export function ResponseNode (props: NodeProps<IResponseNodeData>) {
 }
 
 const hook = (props: NodeProps<IResponseNodeData>) => {
+    const { selectedService, updateService } = useContext(AppContext)
     const [success, setSuccess] = useState<IResponseNodeData['success']>(props.data?.success ?? 'ok')
-
-    const { indicator, setIndicator, onSave } = useNode(props)
+    const [indicator, setIndicator] = useState<boolean>(props.data.indicator ?? false)
 
     const changeStatus: React.ChangeEventHandler<HTMLSelectElement> = (evt) =>{
         setIndicator(true)
         setSuccess(evt.target.value as IResponseNodeData['success'])
     }
+
+    const save = async () => {
+        setIndicator(false)
+        const response = await window.ipcRenderer.invoke('nodes:save-response', selectedService?.name, { ...props, data: { success } })
+        updateService && updateService({...response, name: selectedService?.name})
+    }
     
-    return { success, indicator, changeStatus, onSave }
+    return { success, indicator, changeStatus, save }
 }

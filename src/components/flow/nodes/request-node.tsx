@@ -1,13 +1,13 @@
 import { Handle, Position } from "reactflow";
-import { useNode } from "./hook";
 import { IRequestNodeData } from "../../../app/types";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { NodeProps } from "reactflow";
+import { AppContext } from "../../../app/context";
 
  
 export function RequestNode (props: NodeProps<IRequestNodeData>) { 
 
-    const { path, indicator, method, errorMsg, onChangePath, onChangeMethod, onSave } = hook(props)
+    const { path, indicator, method, errorMsg, onChangePath, onChangeMethod, save } = hook(props)
 
     return <div className={`w-60 bg-slate-900 p-2 rounded-md shadow-xl ${ props.selected && 'outline outline-1 outline-teal-400' }`}>
 
@@ -55,7 +55,7 @@ export function RequestNode (props: NodeProps<IRequestNodeData>) {
                 ${indicator && 'hover:bg-teal-500 active:bg-teal-600'}  
                 ${!indicator && 'bg-teal-950 text-slate-600 dragable'}`} 
                 disabled={!indicator}
-                onClick={onSave}
+                onClick={save}
             >
                 <span className="uppercase font-semibold">save</span>
             </button>
@@ -78,28 +78,32 @@ export function RequestNode (props: NodeProps<IRequestNodeData>) {
 }
 
 const hook = (props: NodeProps<IRequestNodeData>) => {
+    const { selectedService, updateService } = useContext(AppContext)
+    const [indicator, setIndicator] = useState<boolean>(props.data.indicator ?? false)
+    const [path, setPath] = useState<string>(props.data.path ?? '')
+    const [method, setMethod] = useState<IRequestNodeData['method']>(props.data.method ?? 'GET')
+    const [errorMsg, setErrorMsg] = useState<string|null>(null)
 
-    const [path, setPath] = useState<string>(props.data?.path ?? '')
-    const [method, setMethod] = useState<IRequestNodeData['method']>(props.data?.method ?? 'GET')
-
-    const validationCallback = () => {
-        if (path.length == 0) throw new Error('Set a path for the request')
-        return true
+    const save = async () => {
+        if ( !path ) {
+            setErrorMsg('Set a path for this request')
+            return
+        }
+        setErrorMsg(null)
+        setIndicator(false)
+        const response = await window.ipcRenderer.invoke('nodes:save-request', selectedService?.name, { ...props, data: { path, method } } as NodeProps)
+        updateService && updateService({...response, name: selectedService?.name})
     }
-    const { indicator, errorMsg, setIndicator, onSave } = useNode(props, validationCallback)
 
-
-    const onChangePath: React.ChangeEventHandler<HTMLInputElement> = (evt) => {
+    const onChangePath = (e: React.ChangeEvent<HTMLInputElement>) => {
         setIndicator(true)
-        setPath(evt.target.value)
-        props.data.path = evt.target.value
+        setPath(e.target.value)
     }
 
-    const onChangeMethod: React.ChangeEventHandler<HTMLSelectElement> = (evt) => {
+    const onChangeMethod = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setIndicator(true)
-        setMethod(evt.target.value as IRequestNodeData['method'])
-        props.data.method = evt.target.value as IRequestNodeData['method']
+        setMethod(e.target.value as IRequestNodeData['method'])
     }
 
-    return { path, indicator, method, errorMsg, onChangePath, onChangeMethod, onSave }
+    return { indicator, path, method, errorMsg, save, onChangePath, onChangeMethod }
 }

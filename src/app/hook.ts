@@ -235,10 +235,16 @@ export const useServices = () => {
         }
     }
 
+    const updateService = (props: ServiceData) => {
+        const index = services.findIndex(service => service.name == props.name)
+        services[index] = props
+        setServices([...services])
+    }
+
     useEffect(() => {
         loadservices()
     }, [])
 
 
-    return { services, selectedService, createService, renameService, deleteService, selectService }
+    return { services, selectedService, createService, renameService, deleteService, selectService, updateService }
 }

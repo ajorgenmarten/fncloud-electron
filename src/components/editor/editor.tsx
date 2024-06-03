@@ -7,7 +7,7 @@ export function Editor() {
     const editorContainer = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        console.log('mount editor')
+        console.log('Mount editor')
         const editor = monaco.editor.create(editorContainer.current as HTMLDivElement, { theme: 'vs-dark', padding: { top: 20 }, fontFamily: 'cascadia code', automaticLayout: true })
         editor.addAction({
             id: 'save-model-data',
@@ -19,8 +19,8 @@ export function Editor() {
                 saveModel && saveModel(name as string, data)
             },
         })
-        editor.onDidChangeModel(() => console.log('change model'))
-        editor.onDidDispose(() => console.log('dismount editor'))
+        editor.onDidChangeModel(() => console.log('Change model'))
+        editor.onDidDispose(() => console.log('Dismount editor'))
         return () => {
             editor.dispose()
         }
@@ -37,7 +37,7 @@ export function Editor() {
         }
     }, [selectedModel])
 
-    return <div className="h-full w-full grow" ref={editorContainer} >
+    return <div className="h-full w-[calc(100%-320px)]" ref={editorContainer} >
 
     </div>
 }

@@ -5,25 +5,19 @@ import { ICodeNodeData } from "../../../app/types"
 import { AppContext } from "../../../app/context"
 
 export function CodeNode(props: NodeProps<ICodeNodeData>) {
-    const { selectedService } = useContext(AppContext)
-    const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor|null>(null)
-    const [model, setModel] = useState<monaco.editor.ITextModel|null>(null)
     const containerCode = useRef<HTMLDivElement | null> (null)
     const { indicator, name, value, errorMsg, save, changeName, changeValue } = hook(props)
 
     useEffect(() => {
         const seteditor = monaco.editor.create(containerCode.current as HTMLElement, { language: 'typescript', theme: 'vs-dark', automaticLayout: true })
-        const setmodel = monaco.editor.createModel(value, undefined, monaco.Uri.parse(`file:///services/${selectedService}/${name}.ts`))
-            seteditor.setModel(setmodel)
-            seteditor.onKeyUp(changeValue)
-        
-        setEditor(seteditor)
+        const setmodel = monaco.editor.createModel(value, 'typescript')
+        console.log(seteditor.getId())
+        seteditor.setModel(setmodel)
+        seteditor.onKeyUp(changeValue)
         
         return () => {
             setmodel?.dispose()
             seteditor.dispose()
-            setEditor(null)
-            setModel(null)
         }
     }, [])
 
