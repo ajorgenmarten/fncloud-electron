@@ -9,7 +9,7 @@ import { ICodeNodeData, IRequestNodeData, IResponseNodeData } from "../../../app
 import { CustomEdge } from "../edges/custom-edge";
 
 export function useFlow() {
-    const { selectedService } = useContext(AppContext)
+    const { selectedService, updateService } = useContext(AppContext)
     
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -37,11 +37,13 @@ export function useFlow() {
         setNodes([...nodes.map(n => { n.selected = false; return n }), node])
     }
 
-    const createConditionNode = () => {
+    const createConditionNode = async () => {
         const position: XYPosition = { x: 520, y: 100 }
         const type: NodeTypes = "ConditionNode"
         const id = 'condition-node-' + crypto.randomUUID()
         const node: Node = { id, type, position, selected: true, data: { indicator: false } }
+        const response = await window.ipcRenderer.invoke('nodes:save-condition', selectedService?.name, { id, data: { }, xPos: node.position.x, yPos: node.position.y, type })
+        updateService && updateService({...response, name: selectedService?.name})
         setNodes([...nodes.map(n => { n.selected = false; return n }), node])
     }
 
@@ -61,7 +63,7 @@ export function useFlow() {
 
     useEffect(() => {
         if ( selectedService != null ) {
-            console.log('Change flow for `' + selectedService?.name + '`')
+            console.log('Change flow model to `' + selectedService?.name + '`')
             render()
         }
     }, [selectedService])

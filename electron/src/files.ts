@@ -221,6 +221,20 @@ function saveResponseNode (_evt: IpcMainInvokeEvent, service: string, props: Nod
     return serviceObject
 }
 
+function saveConditionNode (_evt: IpcMainInvokeEvent, service: string, props: NodeProps) {
+    const serviceName = `template-${service}.json`
+    const toSave = { id: props.id, data: props.data, type: props.type, xPos: props.xPos, yPos: props.yPos }
+    const serviceObject = JSON.parse( fs.readFileSync( servicesPath + serviceName).toString() ) as ServiceData
+    const findIndex = serviceObject.nodes.findIndex(node => node.id == toSave.id)
+    if (findIndex == -1) {
+        serviceObject.nodes.push(toSave as NodeProps)
+    } else {
+        serviceObject.nodes[findIndex] = toSave as NodeProps
+    }
+    fs.writeFileSync( servicesPath + serviceName, JSON.stringify( serviceObject ))
+    return serviceObject
+}
+
 
 
 
@@ -433,6 +447,7 @@ export const invokes = {
 
     'nodes:save-request': saveRequestNode,
     'nodes:save-response': saveResponseNode,
+    'nodes:save-condition': saveConditionNode,
 
     'services:save-node': saveNode,
     'services:save-edge': saveConnection,
