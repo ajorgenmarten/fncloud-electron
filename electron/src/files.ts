@@ -1,7 +1,7 @@
 import { IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
-import { ITemplateJson, ModelData, ServiceData } from '../../src/app/types'
-import { Edge, EdgeProps, Node, NodeProps } from 'reactflow'
+import { ModelData, ServiceData } from '../../src/app/types'
+import { Edge, EdgeProps, Node, NodeProps, XYPosition } from 'reactflow'
 import { IObjectTemplate } from './types'
 
 const modelsPath = './project/models/'
@@ -235,152 +235,74 @@ function saveConditionNode (_evt: IpcMainInvokeEvent, service: string, props: No
     return serviceObject
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-function saveNode (_evt: IpcMainInvokeEvent, serviceName: string, props: NodeProps ) {
-    const json = objectTemplate(serviceName)
-    const findIndex = json.nodes.findIndex(node => node.id == props.id)
-    if (props.type == "CodeNode") {
-        const path = `/codes/${serviceName}/${props.data.name}.ts`
-        fs.writeFileSync(`./project/${path}`, props.data.value ?? '')
-        props.data.value = undefined
-        props.data.path = path
-    }
-    if (findIndex == -1) {
-        json.nodes.push(props)
-    } else {
-        json.nodes[findIndex] = props
-    }
-    fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
-    return json
+function savePosition (_evt: IpcMainInvokeEvent, service: string, props: NodeProps) {
+    const serviceName = `template-${service}.json`
+    const { xPos, yPos } = props
+    const serviceObject = JSON.parse( fs.readFileSync( servicesPath + serviceName ). toString() ) as ServiceData
+    const findIndex = serviceObject.nodes.findIndex(node => node.id == props.id)
+    serviceObject.nodes[findIndex].xPos = xPos
+    serviceObject.nodes[findIndex].yPos = yPos
+    fs.writeFileSync( servicesPath + serviceName, JSON.stringify( serviceObject ) )
+    return serviceObject
 }
 
-function getTemplate(_evt: IpcMainInvokeEvent, serviceName: string): IObjectTemplate {
-    return { templateName: serviceName, template: objectTemplate(serviceName)}
+function saveEdge (_evt: IpcMainInvokeEvent, service: string, props: Edge) {
+    const serviceName = `template-${service}.json`
+    const serviceObject = JSON.parse( fs.readFileSync( servicesPath + serviceName ). toString() ) as ServiceData
+    serviceObject.edges.push(props)
+    fs.writeFileSync(servicesPath + serviceName, JSON.stringify( serviceObject ))
+    return serviceObject
 }
 
-function getAllObjectTemplates(): IObjectTemplate[] {
-    // lee directorio de los templates, obtiene el nombre y retorna nombre y objeto del json
-    const names = fs.readdirSync('./project/services')
-                    .map(template => {
-                        const templateName = template.split('template-')[1].slice(0,-5)
-                        const templateJson = objectTemplate(templateName)
-                        return { templateName, template: templateJson }
-                    })
-    return names
-}
 
-function saveConnection (_evt: IpcMainInvokeEvent, serviceName: string, props: EdgeProps ) {
-    const json = objectTemplate(serviceName)
-    const findIndex = json.connections.findIndex(edge => edge.id == props.id)
-    if ( findIndex == -1 ) {
-        json.connections.push(props)
-    }
-    fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
-    return json
-}
 
-function deleteNodes (_event: IpcMainInvokeEvent, serviceName: string, nodes: Node[]): IObjectTemplate {
-    const json = objectTemplate(serviceName)
-    nodes.forEach(node => {
-        const findIndexNode = json.nodes.findIndex(n => n.id == node.id)
-        if (findIndexNode == -1) return
-        json.nodes.splice(findIndexNode, 1)
-        json.connections = json.connections.filter(edge => edge.source != node.id && edge.target != node.id)
-    })
-    fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
-    return { templateName: serviceName, template: json }
-}
 
-function deleteEdges (_evt: IpcMainInvokeEvent, serviceName: string, edges: Edge[]): IObjectTemplate {
-    const json = objectTemplate(serviceName)
-    edges.forEach(edge => {
-        const findIndex = json.connections.findIndex(e => e.id == edge.id)
-        if (findIndex == -1) return
-        json.connections.splice(findIndex, 1)
-    })
-    fs.writeFileSync(templatePath(serviceName), JSON.stringify(json))
-    return { template: json, templateName: serviceName }
-}
 
-function getCodeNodeValue (_evt: IpcMainInvokeEvent, serviceName: string, codeName: string) {
-    return fs.readFileSync(`./project/codes/${serviceName}/${codeName}.ts`).toString()
-}
 
-function templatePath(name: string) { return `./project/services/template-${name}.json` }
 
-function objectTemplate(name: string) {
-    const jsonPath = templatePath(name)
-    const json = JSON.parse ( fs.readFileSync(jsonPath).toString() ) as ITemplateJson
-    return json
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -448,13 +370,6 @@ export const invokes = {
     'nodes:save-request': saveRequestNode,
     'nodes:save-response': saveResponseNode,
     'nodes:save-condition': saveConditionNode,
-
-    'services:save-node': saveNode,
-    'services:save-edge': saveConnection,
-    'services:delete-edges': deleteEdges,
-    'services:delete-nodes': deleteNodes,
-    'services:get-code-node-value': getCodeNodeValue,
-
-    'services:get-template': getTemplate,
-    'services:get-all-templates': getAllObjectTemplates,
+    'nodes:save-position': savePosition,
+    'nodes:save-connection': saveEdge,
 }

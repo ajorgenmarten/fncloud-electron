@@ -5,7 +5,7 @@ import './styles.css'
 import { FlowPanel } from "./panel";
 
 export function Flow() {
-  const { nodes, edges, nodeTypes, edgeTypes, onNodeDragStop, onEdgesDelete, onNodesChange, onEdgesChange, onConnect, onNodesDelete } = useContext( FlowContext )
+  const { nodes, edges, nodeTypes, edgeTypes, onNodesDragStop, onEdgesDelete, onNodesChange, onEdgesChange, onConnect, onNodesDelete } = useContext( FlowContext )
 
   useEffect(() => {
     console.log('Mount flow')
@@ -21,8 +21,8 @@ export function Flow() {
       nodeTypes={nodeTypes}
       edges={edges}
       defaultEdgeOptions={{ animated: true, type: 'CustomEdge'}}
-      // defaultEdgeOptions={{ animated: true, style: { stroke: 'rgb(13 148 136)', strokeWidth: 2 }, type: 'smoothstep' }}
-      onNodeDragStop={onNodeDragStop}
+      // defaultEdgeOptions={{ animated: true, style: { stroke: 'rgb(13 148 136)', strokeWidth: 2 }, type: 'smoothstep' }}\
+      onNodeDragStop={onNodesDragStop}
       onConnect={onConnect}
       onEdgesDelete={onEdgesDelete}
       onNodesDelete={onNodesDelete}

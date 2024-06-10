@@ -1,4 +1,4 @@
-import { EdgeProps, NodeProps } from "reactflow"
+import { Edge, EdgeProps, NodeProps } from "reactflow"
 import { ServiceJson } from "../../electron/src/types"
 
 export interface AppProviderProps {
@@ -14,14 +14,9 @@ export interface ModelData {
 export interface ServiceData {
     name: string
     nodes: NodeProps[]
-    edges: EdgeProps[]
+    edges: Edge[]
 }
 
-
-export interface ITemplateJson {
-    nodes: NodeProps[]
-    connections: EdgeProps[]
-}
 // TIPO DE DATOS DE NODOS
 
 interface INodeData {

@@ -223,6 +223,7 @@ export const useServices = () => {
         await window.ipcRenderer.invoke('services:delete', service_name) as Omit<ServiceData, "nodes" | "edges">
         const index = services.findIndex(service => service.name == service_name)
         services.splice(index, 1)
+        if ( service_name == selectedService?.name ) setSelectedService(null)
         setServices([...services])
     }
 

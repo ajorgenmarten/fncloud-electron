@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo } from "react";
-import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, NodeDragHandler, XYPosition } from "reactflow";
+import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, NodeDragHandler, XYPosition, EdgeProps } from "reactflow";
 import { RequestNode } from "../nodes/request-node";
 import { ResponseNode } from "../nodes/response-node";
 import { ConditionNode } from "../nodes/condition-node";
@@ -9,7 +9,7 @@ import { ICodeNodeData, IRequestNodeData, IResponseNodeData } from "../../../app
 import { CustomEdge } from "../edges/custom-edge";
 
 export function useFlow() {
-    const { selectedService, updateService } = useContext(AppContext)
+    const { selectedService, services, updateService } = useContext(AppContext)
     
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -56,6 +56,51 @@ export function useFlow() {
         setNodes([...nodes.map(n => { n.selected = false; return n }), node])
     }
 
+    const onNodesDragStop: NodeDragHandler = async (_evt, node) => {
+        const findIndex = services?.find(s => s.name == selectedService?.name)?.nodes.findIndex(n => n.id == node.id)
+        if (findIndex == -1 || findIndex == undefined) return
+        
+        const props = { id: node.id, xPos: node.position.x, yPos: node.position.y }
+        const template = await window.ipcRenderer.invoke('nodes:save-position', selectedService?.name,  props)
+        updateService && updateService({ ...template, name: selectedService?.name })
+    }
+
+    const onConnect = async (connection: Connection) => {
+        const { target, source, sourceHandle } = connection
+        
+        const service = services?.find(service => service.name == selectedService?.name)
+        
+        const nodesFound = service?.nodes.filter(node => node.id == source || node.id == target)
+        if (nodesFound == undefined || nodesFound?.length < 2) return
+        
+        const edgeFound = service?.edges.find(edge => {
+            if ( sourceHandle && edge.source == source && edge.sourceHandle == sourceHandle) return true
+            if ( source == edge.source ) return true
+            return false
+        })
+        if (edgeFound) return
+
+        // VALIDATIONS
+        const nodeTarget = nodesFound.find(node => node.id == target)
+        const nodeSource = nodesFound.find(node => node.id == source)
+
+        if (nodeTarget?.type == "ConditionNode") {
+            if ( nodeSource?.type !== "CodeNode") return
+        }
+        
+        const edge: Edge = {
+            id: crypto.randomUUID() as string,
+            source: source as string,
+            target: target as string,
+            sourceHandle: sourceHandle,
+            targetHandle: connection.targetHandle,
+            type: "CustomEdge"
+        }
+        const template = await window.ipcRenderer.invoke('nodes:save-connection', selectedService?.name, edge)
+        setEdges([...edges, edge])
+        updateService && updateService({ ...template, name: selectedService?.name })
+    }
+
     const render = () => {
         setNodes(selectedService?.nodes.map(n => ({ id: n.id, data: n.data, position: { x: n.xPos, y: n.yPos }, type: n.type })) || [])
         setEdges(selectedService?.edges || [])
@@ -68,7 +113,7 @@ export function useFlow() {
         }
     }, [selectedService])
 
-    return {nodes, edges, nodeTypes, edgeTypes, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode}    
+    return {nodes, edges, nodeTypes, edgeTypes, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, onNodesDragStop, onConnect }    
 }
 
 /**
