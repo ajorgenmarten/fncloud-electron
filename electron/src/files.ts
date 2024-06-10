@@ -1,8 +1,7 @@
 import { IpcMainInvokeEvent } from 'electron'
 import fs from 'fs'
 import { ModelData, ServiceData } from '../../src/app/types'
-import { Edge, EdgeProps, Node, NodeProps, XYPosition } from 'reactflow'
-import { IObjectTemplate } from './types'
+import { Edge, Node, NodeProps } from 'reactflow'
 
 const modelsPath = './project/models/'
 const servicesPath = './project/services/'
@@ -265,6 +264,17 @@ function deleteEdges (_evt: IpcMainInvokeEvent, service: string, edges: Edge[]) 
     return serviceObject
 }
 
+function deleteNodes (_evt: IpcMainInvokeEvent, service: string, nodes: Node[]) {
+    const serviceName = `template-${service}.json`
+    const serviceObject = JSON.parse( fs.readFileSync( servicesPath + serviceName ).toString() ) as ServiceData
+    nodes.forEach(node => {
+        const findIndex = serviceObject.nodes.findIndex(n => node.id == n.id)
+        serviceObject.nodes.splice(findIndex, 1)
+    })
+    fs.writeFileSync(servicesPath + serviceName, JSON.stringify( serviceObject ))
+    return serviceObject
+}
+
 
 
 
@@ -384,4 +394,5 @@ export const invokes = {
     'nodes:save-position': savePosition,
     'nodes:save-connection': saveEdge,
     'nodes:delete-connections': deleteEdges,
+    'nodes:delete-nodes': deleteNodes,
 }

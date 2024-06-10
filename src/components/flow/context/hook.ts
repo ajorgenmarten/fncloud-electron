@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo } from "react";
-import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, NodeDragHandler, XYPosition, EdgeProps } from "reactflow";
+import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeDragHandler, XYPosition } from "reactflow";
 import { RequestNode } from "../nodes/request-node";
 import { ResponseNode } from "../nodes/response-node";
 import { ConditionNode } from "../nodes/condition-node";
@@ -101,6 +101,11 @@ export function useFlow() {
         updateService && updateService({ ...template, name: selectedService?.name })
     }
 
+    const onNodesDelete = async (nodes: Node[]) => {
+        const template = await window.ipcRenderer.invoke('nodes:delete-nodes', selectedService?.name, nodes)
+        updateService && updateService({ ...template, name: selectedService?.name })
+    }
+
     const onEdgesDelete = async (edges: Edge[]) => {
         const template = await window.ipcRenderer.invoke('nodes:delete-connections', selectedService?.name, edges)
         updateService && updateService({ ...template, name: selectedService?.name })
@@ -118,7 +123,7 @@ export function useFlow() {
         }
     }, [selectedService])
 
-    return {nodes, edges, nodeTypes, edgeTypes, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, onNodesDragStop, onConnect, onEdgesDelete }    
+    return {nodes, edges, nodeTypes, edgeTypes, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, onNodesDragStop, onConnect, onEdgesDelete, onNodesDelete }    
 }
 
 /**
@@ -171,38 +176,10 @@ export function useFlow() {
         
     }
 
-    const onConnect = useCallback((connection: Connection) => {
-        
-        const hasEdge = edges.find( edge => {
-            if (connection.sourceHandle) {
-                return connection.sourceHandle == edge.sourceHandle
-            } 
-            return connection.source == edge.source
-        } )
-        if ( hasEdge ) return
-        if (connection.target == connection.source) return
-
-        const target: Node = nodes.find(n => n.id == connection.target) as Node
-        const source: Node = nodes.find(n => n.id == connection.source) as Node
-
-        if (!templates?.find(t => t.templateName == selectedService)?.template.nodes.find(n => n.id == target.id)) return
-        if (!templates?.find(t => t.templateName == selectedService)?.template.nodes.find(n => n.id == source.id)) return
-
-        if (target.type == "ConditionNode" && source.type != "CodeNode") return
-        
-        const edge: Edge = { id: `${crypto.randomUUID()}`, source: connection.source as string, target: connection.target as string, type: "CustomEdge", sourceHandle: connection.sourceHandle, targetHandle: connection.targetHandle }
-        window.ipcRenderer.invoke('services:save-connection', selectedService, edge)
-        setEdges([...edges, edge])
-
-    }, [nodes, edges] )
+   
 
     const onNodesDelete = useCallback(async (nodes: Node[]) => {
         const template = await window.ipcRenderer.invoke('services:delete-nodes', selectedService, nodes)
-        updateTemplate && updateTemplate(template)
-    }, [selectedService])
-
-    const onEdgesDelete = useCallback(async (edges: Edge[]) => {
-        const template = await window.ipcRenderer.invoke('services:delete-connection', selectedService, edges)
         updateTemplate && updateTemplate(template)
     }, [selectedService])
 
