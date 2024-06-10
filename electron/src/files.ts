@@ -254,6 +254,17 @@ function saveEdge (_evt: IpcMainInvokeEvent, service: string, props: Edge) {
     return serviceObject
 }
 
+function deleteEdges (_evt: IpcMainInvokeEvent, service: string, edges: Edge[]) {
+    const serviceName = `template-${service}.json`
+    const serviceObject = JSON.parse( fs.readFileSync( servicesPath + serviceName ).toString() ) as ServiceData
+    edges.forEach(edge => {
+        const findIndex = serviceObject.edges.findIndex(e => e.id == edge.id)
+        serviceObject.edges.splice(findIndex, 1)
+    })
+    fs.writeFileSync(servicesPath + serviceName, JSON.stringify( serviceObject ))
+    return serviceObject
+}
+
 
 
 
@@ -372,4 +383,5 @@ export const invokes = {
     'nodes:save-condition': saveConditionNode,
     'nodes:save-position': savePosition,
     'nodes:save-connection': saveEdge,
+    'nodes:delete-connections': deleteEdges,
 }

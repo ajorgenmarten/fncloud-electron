@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import { Connection, Edge, type Node, useEdgesState, useNodesState, NodeProps, NodeDragHandler, XYPosition, EdgeProps } from "reactflow";
 import { RequestNode } from "../nodes/request-node";
 import { ResponseNode } from "../nodes/response-node";
@@ -101,6 +101,11 @@ export function useFlow() {
         updateService && updateService({ ...template, name: selectedService?.name })
     }
 
+    const onEdgesDelete = async (edges: Edge[]) => {
+        const template = await window.ipcRenderer.invoke('nodes:delete-connections', selectedService?.name, edges)
+        updateService && updateService({ ...template, name: selectedService?.name })
+    }
+
     const render = () => {
         setNodes(selectedService?.nodes.map(n => ({ id: n.id, data: n.data, position: { x: n.xPos, y: n.yPos }, type: n.type })) || [])
         setEdges(selectedService?.edges || [])
@@ -113,7 +118,7 @@ export function useFlow() {
         }
     }, [selectedService])
 
-    return {nodes, edges, nodeTypes, edgeTypes, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, onNodesDragStop, onConnect }    
+    return {nodes, edges, nodeTypes, edgeTypes, onNodesChange, onEdgesChange, createRequestNode, createResponseNode, createConditionNode, createCodeNode, onNodesDragStop, onConnect, onEdgesDelete }    
 }
 
 /**
